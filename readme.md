@@ -5,6 +5,17 @@ Each project is standalone but shares a common base configuration to simplify ma
 
 ---
 
+## Device Summary
+
+| Device Name | File(s) | Platform | Description | Main Features |
+|--------------|----------|-----------|--------------|----------------|
+| **Bedside Lamp** | `esp-lampe-chevet.yaml` | ESP32 | Smart bedside lamp integrated with Home Assistant | Adjustable RGB light, brightness control, sunrise wake-up effect |
+| **Hallway Lamp** | `esp-lampe-couloir.yaml` | ESP8266 | Automatic hallway light | Motion or schedule-based control, HA integration |
+| **Dual Smart Plug** | `esp-plug-2x.yaml` | ESP8266 | Dual controllable smart plug | Two independent outlets, optional power monitoring |
+| **Smart Mood Lights (x3)** | `smart-mood-light.yaml`, `smart-mood-light-ii.yaml`, `smart-mood-light-iii.yaml` | **BK7231N (LSC Smart Connect)** | Commercial LSC Smart Connect lamps reflashed with ESPHome | RGB control, local-only operation, shared config (`common-smart-mood-light.yaml`) |
+
+---
+
 ## Repository Structure
 ESPHome-Devices/  
 ├── common.yaml  
