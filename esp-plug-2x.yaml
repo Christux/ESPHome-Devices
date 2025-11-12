@@ -1,0 +1,29 @@
+substitutions:
+  name: esp-plug-2x
+  friendly_name: ESP Plug 2x
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp8266:
+  board: esp12e
+
+<<: !include common.yaml
+
+web_server:
+  port: 80
+  ota: false
+
+switch:
+  - platform: gpio
+    pin: GPIO12
+    id: relay_A
+    name: "Interupteur A"
+    icon: "mdi:power-plug"
+
+  - platform: gpio
+    pin: GPIO13
+    id: relay_B
+    name: "Interupteur B"
+    icon: "mdi:power-plug"

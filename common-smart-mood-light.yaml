@@ -1,0 +1,210 @@
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2024.6.0
+  name_add_mac_suffix: false
+  #includes:
+  #  - ./smart-mood-light/diyhueasyncudp-generic.h
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+<<: !include common.yaml
+
+#custom_component:
+#- lambda: |-
+#    auto diyhue = new diyhueudp();
+#    return {diyhue};
+
+# web_server:
+#   port: 80
+#   version: 3
+#   ota: false
+
+# mdns:
+#   services:
+#     - service: "_entertainment"
+#       protocol: "_udp"
+#       port: 2100
+#       txt:
+#         friendly_name: ${friendly_name}
+
+text_sensor:
+  - platform: libretiny
+    version:
+      name: LibreTiny Version
+  - platform: wifi_info
+    ip_address:
+      name: ESP IP Address
+  - platform: template
+    name: "light_id"
+    id: light_id
+    lambda: |-
+      char response[100];
+      memset( response, 0, 100 );
+      strcat( response, "esphome_diyhue_light;");
+      strcat( response, WiFi.macAddress().c_str());
+      strcat( response, ";");
+      strcat( response, App.get_name().c_str());
+      strcat( response, ";0;0" ); // ;CT_BOOST;RGB_BOOST values go here; Replace with 0 to disable
+      return { response };
+    update_interval: 24h
+
+switch:
+  - platform: template
+    name: entertainment_switch
+    id: entertainment_switch
+    optimistic: true
+    lambda: return id(entertainment_switch).state;
+
+globals:
+- id: effect_index
+  type: int
+  initial_value: "0"
+- id: color_index
+  type: int
+  initial_value: "0"
+- id: colors
+  type: float[12]
+  initial_value: "{1., 1., 1., .5, .0, .0, .0, .0, .0, .5, 1., 1.}"
+
+binary_sensor:
+  - platform: gpio
+    id: binary_toggle_light
+    pin:
+      number: P14
+      inverted: true
+      mode: INPUT_PULLUP
+    on_press:
+      then:
+        - light.toggle: color_led
+        # if:
+        #   condition:
+        #     - light.is_on: color_led
+        #   then:
+        #     - lambda: |-
+        #         if(id(color_led).remote_values.get_color_mode() == light::ColorMode::RGB)
+        #         {
+        #           auto call = id(color_led).turn_on();
+        #           call.set_color_mode(light::ColorMode::WHITE);
+        #           call.set_transition_length(1000);
+        #           call.perform();
+        #         }
+        #         else{
+        #           id(color_led).turn_off().set_transition_length(1000).perform();
+        #         }
+        #         return;
+        #   else:
+        #     - light.turn_on: color_led
+
+  - platform: gpio
+    id: binary_cycle_effects
+    pin:
+      number: P9
+      inverted: true
+      mode: INPUT_PULLUP
+    on_press:
+      then:
+        if:
+          condition:
+            - light.is_on: color_led
+          then:
+            - lambda: |-
+                std::string actual_effect=id(color_led).get_effect_name();
+                static int total_effects=id(color_led).get_effects().size();
+                std::string this_effect="";
+
+                if(actual_effect=="None") {
+                  id(effect_index)=0;
+                } else {
+                  for(int i = 0; i <= total_effects; i++) {
+                    this_effect=id(color_led).get_effects().at(i)->get_name().c_str();
+                    if (this_effect==actual_effect) {
+                      id(effect_index)=i+1;
+                      break;
+                    }
+                  }
+
+                  if (id(effect_index)==total_effects) {
+                    id(effect_index)=-1;
+                  }
+                }
+
+                if (id(effect_index)==-1) {
+                  id(color_led).turn_on().set_effect("None").perform();
+                } else {
+                  id(color_led).turn_on().set_effect(id(color_led).get_effects().at(id(effect_index))->get_name().c_str()).perform();
+                }
+                return;
+
+  - platform: gpio
+    id: binary_cycle_colors
+    pin:
+      number: P8
+      inverted: true
+      mode: INPUT_PULLUP
+    on_press:
+      then:
+        if:
+          condition:
+            - light.is_on: color_led
+          then:
+            - lambda: |-
+                auto call = id(color_led).turn_on();
+                call.set_color_mode(light::ColorMode::RGB);
+                call.set_transition_length(1000);
+                int ridx = id(color_index);
+                int gidx = ridx + 8 < 12 ? ridx + 8 : ridx - 4;
+                int bidx = ridx + 4 < 12 ? ridx + 4 : ridx - 8;
+                call.set_rgb(id(colors)[ridx], id(colors)[gidx], id(colors)[bidx]);
+                call.perform();
+                id(color_index) = id(color_index) < 12 ? id(color_index) + 1 : 0;
+                return;
+
+output:
+  - platform: libretiny_pwm
+    id: output_red
+    pin: P6
+  - platform: libretiny_pwm
+    id: output_green
+    pin: P7
+  - platform: libretiny_pwm
+    id: output_blue
+    pin: P24
+  - platform: libretiny_pwm
+    id: output_cold
+    pin: P26
+
+light:
+  - platform: rgbw
+    id: color_led
+    name: "color_led"
+    red: output_red
+    green: output_green
+    blue: output_blue
+    white: output_cold
+    color_interlock: true
+    restore_mode: RESTORE_AND_OFF
+    default_transition_length: 0.4s
+    effects:
+      - lambda:
+          name: Color cycle
+          update_interval: 5s
+          lambda: |-
+            static int state = 0;
+            auto call = id(color_led).turn_on();
+            if(initial_run)
+            {
+              call.set_color_mode(light::ColorMode::RGB);
+            }
+            call.set_transition_length(1000);
+            int ridx = state;
+            int gidx = ridx + 8 < 12 ? ridx + 8 : ridx - 4;
+            int bidx = ridx + 4 < 12 ? ridx + 4 : ridx - 8;
+            call.set_rgb(id(colors)[ridx], id(colors)[gidx], id(colors)[bidx]);
+            call.perform();
+            state = state < 11 ? state + 1 : 0;
+            return;
+      - random:
+      - flicker:
+      - pulse:

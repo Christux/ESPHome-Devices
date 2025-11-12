@@ -1,0 +1,33 @@
+substitutions:
+  name: esp-lampe-couloir
+  friendly_name: ESP Lampe Couloir
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2024.6.0
+  name_add_mac_suffix: false
+  on_boot:
+    priority: -10
+    then:
+      - switch.turn_off: annoyingled
+
+esp8266:
+  board: d1_mini
+
+<<: !include common.yaml
+
+# Led light
+light:
+  - platform: neopixelbus
+    type: GRB
+    variant: WS2812
+    pin: GPIO04
+    num_leds: 12
+    name: "NeoPixel Light"
+
+switch:
+  - platform: gpio
+    pin: GPIO2
+    inverted: true
+    id: annoyingled

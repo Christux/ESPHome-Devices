@@ -1,0 +1,5 @@
+substitutions:
+  name: smart-mood-light
+  friendly_name: "Smart Mood Light"
+
+<<: !include common-smart-mood-light.yaml

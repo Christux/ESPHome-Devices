@@ -1,0 +1,272 @@
+substitutions:
+  name: esp-lampe-chevet
+  friendly_name: ESP Lampe Chevet
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  on_boot:
+    priority: -10
+    then:
+      - switch.turn_off: annoyingled
+
+esp8266:
+  board: nodemcuv2
+
+<<: !include common.yaml
+
+globals:
+- id: colors
+  type: float[12]
+  initial_value: "{1., 1., 1., .5, .0, .0, .0, .0, .0, .5, 1., 1.}"
+- id: brightness_backup
+  type: float
+  initial_value: ".0"
+
+binary_sensor:
+  - platform: gpio
+    id: binary_toggle_light
+    pin:
+      number: GPIO4
+      inverted: true
+      mode: INPUT_PULLUP
+    on_press:
+      - light.toggle: ledring
+    on_release: 
+      - light.toggle: ledring
+
+output:
+  - platform: gpio
+    id: led_output
+    pin:
+      number: GPIO16
+
+switch:
+  - platform: gpio
+    pin: GPIO2
+    inverted: true
+    id: annoyingled
+
+# Led light
+light:
+  - platform: binary
+    name: "Veilleuse"
+    output: led_output
+    restore_mode: ALWAYS_OFF
+    effects:
+      - strobe:
+
+  - platform: neopixelbus
+    id: ledring
+    type: GRB
+    variant: WS2812
+    pin: GPIO3
+    num_leds: 24
+    name: "Led Ring"
+    restore_mode: RESTORE_AND_OFF
+    gamma_correct: 1
+
+    # Init brightness on light turn on
+    on_turn_on: 
+      then:
+        - lambda: |-
+            ESP_LOGD("LedRing", "Turn on");
+            if(id(brightness_backup) > .0)
+            {
+              ESP_LOGD("LedRing", "Restore brightness to %f", id(brightness_backup));
+              id(ledring).turn_on().set_brightness(id(brightness_backup)).perform();
+            }
+            return;
+    
+    # Effects        
+    effects:
+      - lambda:
+          name: Color cycle
+          update_interval: 5s
+          lambda: |-
+            static int state = 0;
+            auto call = id(ledring).turn_on();
+            call.set_transition_length(1000);
+            int ridx = state;
+            int gidx = ridx + 8 < 12 ? ridx + 8 : ridx - 4;
+            int bidx = ridx + 4 < 12 ? ridx + 4 : ridx - 8;
+            call.set_rgb(id(colors)[ridx], id(colors)[gidx], id(colors)[bidx]);
+            call.perform();
+            state = state < 11 ? state + 1 : 0;
+            return;
+      - random:
+      - flicker:
+      - pulse:
+
+      # Fire effect
+      - addressable_lambda:
+          name: "Fire"
+          update_interval: 15ms
+          lambda: |-
+            int Cooling = 55;
+            int Sparking = 110;
+            static byte heat[188];
+            int cooldown;
+
+            // Step 1.  Cool down every cell a little
+            for( int i = 0; i < it.size(); i++) {
+              cooldown = random(0, ((Cooling * 10) / it.size()) + 2);
+
+              if(cooldown>heat[i]) {
+                heat[i]=0;
+              } else {
+                heat[i]=heat[i]-cooldown;
+              }
+            }
+
+            // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+            for( int k= it.size() - 1; k >= 2; k--) {
+              heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
+            }
+
+            // Step 3.  Randomly ignite new 'sparks' near the bottom
+            if( random(255) < Sparking ) {
+              int y = random(7);
+              heat[y] = heat[y] + random(160,255);
+            }
+
+            // Step 4.  Convert heat to LED colors
+            for( int Pixel = 0; Pixel < it.size(); Pixel++) {
+              // Scale 'heat' down from 0-255 to 0-191
+              byte t192 = round((heat[Pixel]/255.0)*191);
+
+              // calculate ramp up from
+              byte heatramp = t192 & 0x3F; // 0..63
+              heatramp <<= 2; // scale up to 0..252
+
+              // figure out which third of the spectrum we're in:
+              //this is where you can reverse the effect by switching the commented out lines in all 3 places.
+              if( t192 > 0x80) {                     // hottest
+                //it[it.size() - Pixel - 1] = ESPColor(255, 255, heatramp);
+                it[Pixel] = ESPColor(255, 255, heatramp);
+              } else if( t192 > 0x40 ) {             // middle
+                //it[it.size() - Pixel - 1] = ESPColor(255, heatramp, 0);
+                it[Pixel] = ESPColor(255, heatramp, 0);
+              } else {                               // coolest
+                //it[it.size() - Pixel - 1] = ESPColor(heatramp, 0, 0);
+                it[Pixel] = ESPColor(heatramp, 0, 0);
+              }
+            }
+
+            return;
+
+      # Custom sun rise
+      - addressable_lambda:
+          name: Sunrise
+          update_interval: 0.1s
+          lambda: |-
+            static const unsigned long duration = 30 * 60; // in seconds
+            const unsigned int Imax = 200;
+            //const float Imax = .95;
+            static unsigned long timestart = 0;
+            static unsigned long timestop = 0;
+            static unsigned int pixels = 0;
+            
+            unsigned long now = millis();
+
+            if(initial_run)
+            {
+              timestart = now;
+              timestop = now + duration * 1000;
+              pixels = it.size();
+
+              ESP_LOGD("Sunrise", "Start sun rise");
+              
+              // Turn all off
+              for (int i = 0; i < pixels; i++) {
+                it[i] = Color::BLACK;
+              }
+
+              id(brightness_backup) = id(ledring).remote_values.get_brightness();
+              ESP_LOGD("Sunrise", "Brighness: %f", id(brightness_backup));
+              
+              // Set brightness to max
+              id(ledring).turn_on().set_brightness(1.).perform();
+            }
+
+            if (now < timestop) {
+
+              unsigned long t = (now - timestart) / 1000; // seconds
+              float R = Imax * pixels * 1.0 / (1 + exp(-0.5 * 30 / duration * (t - duration * 0.55) ) );
+              float G = Imax * pixels * 0.7 / (1 + exp(-0.55 * 30 / duration * (t - duration * 0.7 ) ) );
+              float B = Imax * pixels * 0.1 / (1 + exp(-0.6 * 30 / duration * (t - duration * 0.8 ) ) );
+
+              uint8_t Rmean = (unsigned int)R / pixels;
+              uint8_t Gmean = (unsigned int)G / pixels;
+              uint8_t Bmean = (unsigned int)B / pixels;
+              int Ridx = (unsigned int)R % pixels;
+              int Gidx = (unsigned int)G % pixels;
+              int Bidx = (unsigned int)B % pixels;
+
+              for (int i = 0; i < pixels; i++) {
+                
+                uint8_t r = Rmean;
+                uint8_t g = Gmean;
+                uint8_t b = Bmean;
+
+                if (i < Ridx) r ++;
+                if (i < Gidx) g ++;
+                if (i < Bidx) b ++;
+
+                it[i].set_rgb(r, g, b);
+              }
+            }
+            else
+            {
+              if (timestop > 0)
+              {
+                ESP_LOGD("Sunrise", "End sun rise");
+                timestop = 0;
+              }
+            }
+
+            return;
+
+      - addressable_lambda:
+          name: Blue Scan
+          update_interval: 25ms
+          lambda: |-
+
+            static int step = 0;
+            static int direction = 1;
+
+            if(initial_run){
+              step = 0;
+            }
+
+            it[step] = Color(0,0,255);
+            if(step >0 && step < it.size()){
+              it[step + (direction * -1)] = Color::BLACK;
+            }
+
+            step = step + direction;
+
+            if(step >= it.size() || step < 0){
+              direction = direction * -1;
+              step = step + (direction * 2);
+            }
+
+            return;
+
+      - addressable_lambda:
+          name: "Police scroll"
+          update_interval: 50ms
+          lambda: |-
+            static uint16_t pos = 0;
+            if (pos < it.size() / 2) {
+              it.range(pos, pos + it.size() / 2) = Color(255, 0, 0);       //fill red
+              it.range(0, pos) = Color(0, 0, 255);                         //fill blue
+              it.range(pos + it.size() / 2, it.size()) = Color(0, 0, 255); //fill blue
+            } else {
+              it.range(pos - it.size() / 2, pos) = Color(0, 0, 255);       //fill blue
+              it.range(0, pos - it.size() / 2) = Color(255, 0, 0);         //fill red
+              it.range(pos, it.size()) = Color(255, 0, 0);                 //fill red
+            }
+            pos++;
+            if (pos >= it.size()) pos = 0; //rollover
+            return;

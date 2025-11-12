@@ -1,0 +1,86 @@
+esphome:
+  name: dev-nodemcu
+  friendly_name: DEV NodeMCU
+  includes:
+    - diyhueasyncudp-generic.h
+
+esp8266:
+  board: nodemcuv2
+
+custom_component:
+- lambda: |-
+    auto diyhue = new diyhueudp();
+    return {diyhue};
+
+# Enable logging
+logger:
+  level: VERBOSE
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "YF9NiA8rUADYV0nUwRqIybNZ5CONmVK5SCrod3AkgHA="
+
+# Allow Over-The-Air updates
+ota:
+- platform: esphome
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Dev-Nodemcu Fallback Hotspot"
+    password: "L7Oa1TUtz5Li"
+
+captive_portal:
+
+web_server:
+  port: 80
+  version: 3
+  ota: false
+
+mdns:
+
+light:
+  - platform: neopixelbus
+    id: color_led
+    name: "color_led"
+    type: GRB
+    variant: WS2812
+    pin: GPIO04
+    num_leds: 5
+    restore_mode: RESTORE_AND_OFF
+    default_transition_length: 0.4s
+
+sensor:
+  - platform: uptime
+    name: Uptime
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ESP IP Address
+
+  - platform: template
+    name: "light_id"
+    id: light_id
+    lambda: |-
+      char response[100];
+      memset( response, 0, 100 );
+      strcat( response, "esphome_diyhue_light;");
+      strcat( response, WiFi.macAddress().c_str());
+      strcat( response, ";");
+      strcat( response, App.get_name().c_str());
+      strcat( response, ";0;0" ); // ;CT_BOOST;RGB_BOOST values go here; Replace with 0 to disable
+      return { response };
+    update_interval: 24h
+
+switch:
+  - platform: template
+    name: entertainment_switch
+    id: entertainment_switch
+    optimistic: true
+    lambda: return id(entertainment_switch).state;
