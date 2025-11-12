@@ -72,3 +72,7 @@ Features:
 - **`common-smart-mood-light.yaml`**: common configuration for mood light devices to avoid code duplication.
 
 ---
+
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).
