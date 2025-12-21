@@ -13,7 +13,7 @@ esphome:
 esp8266:
   board: nodemcuv2
 
-<<: !include common.yaml
+<<: !include common/common.yaml
 
 globals:
 - id: colors

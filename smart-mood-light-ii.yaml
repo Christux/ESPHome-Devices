@@ -2,4 +2,4 @@ substitutions:
   name: smart-mood-light-ii
   friendly_name: "Smart Mood Light II"
 
-<<: !include common-smart-mood-light.yaml
+<<: !include common/common-smart-mood-light.yaml
