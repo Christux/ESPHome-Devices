@@ -1,8 +1,5 @@
 sensor:
 
-  - platform: uptime
-    name: Uptime
-
 ##### Climat ###################################
 
   - platform: mqtt_subscribe
