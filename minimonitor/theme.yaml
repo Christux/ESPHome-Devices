@@ -22,7 +22,7 @@ font:
       weight: 900
     id: font_32
     size: 32
-    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdeéfghijklmnopqrstuvwxyz0123456789-_/ "
+    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdeéfghijklmnopqrstuvwxyz0123456789-_/ .!?'"
 
   - file:
       type: gfonts
@@ -38,7 +38,7 @@ font:
       weight: 900
     id: font_24
     size: 24
-    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdeéfghijklmnopqrstuvwxyz0123456789.%:°-_/ '"
+    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdeéfghijklmnopqrstuvwxyz0123456789%:°-_/ .!?'"
 
   - file: "fonts/weathericons-regular-webfont.ttf"
     id: font_icons

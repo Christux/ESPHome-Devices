@@ -189,6 +189,11 @@
       }
       break;
     
+    case 66:
+      it.fill(id(red));
+      it.print(120, 120, id(font_32), id(light_gray), TextAlign::CENTER, "OTA Update..");
+      break;
+
     default:
       
       break;

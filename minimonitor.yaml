@@ -21,6 +21,13 @@ esp32:
 packages:
   common-base: !include common/common.yaml
 
+ota:
+  - platform: esphome
+    on_begin:
+      then:
+        - lambda: id(current_page) = 66;
+        - component.update: screen
+
 mqtt:
   broker: !secret mqtt_broker
   username: !secret mqtt_user

@@ -27,7 +27,7 @@ switch:
     name: "Défilement automatique"
     id: switch_auto_scroll
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
+    restore_mode: ALWAYS_ON
     turn_on_action:
       - lambda: id(auto_scroll) = true;
       - script.execute: update_page_select
