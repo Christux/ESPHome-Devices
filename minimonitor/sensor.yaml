@@ -1,0 +1,135 @@
+sensor:
+
+  - platform: uptime
+    name: Uptime
+
+##### Climat ###################################
+
+  - platform: mqtt_subscribe
+    name: "Température Salon"
+    id: temp_salon
+    topic: "climat/salon/temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+  - platform: mqtt_subscribe
+    name: "Humidité Salon"
+    id: hum_salon
+    topic: "climat/salon/humidite"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+  - platform: mqtt_subscribe
+    name: "Température Chambre"
+    id: temp_chambre
+    topic: "climat/chambre/temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+  - platform: mqtt_subscribe
+    name: "Humidité Chambre"
+    id: hum_chambre
+    topic: "climat/chambre/humidite"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+  - platform: mqtt_subscribe
+    name: "Température Chloé"
+    id: temp_chloe
+    topic: "climat/chloe/temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+  - platform: mqtt_subscribe
+    name: "Humidité Chloé"
+    id: hum_chloe
+    topic: "climat/chloe/humidite"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+  - platform: mqtt_subscribe
+    name: "Température Balcon"
+    id: temp_balcon
+    topic: "climat/balcon/temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+  - platform: mqtt_subscribe
+    name: "Humidité Balcon"
+    id: hum_balcon
+    topic: "climat/balcon/humidite"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+##### Fetes ###################################
+text_sensor:
+
+  - platform: mqtt_subscribe
+    name: "Saint du jour"
+    id: saint_du_jour
+    topic: "jours_feries/saint_du_jour"
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+  - platform: mqtt_subscribe
+    name: "Anniversaire du jour"
+    id: anniversaire_du_jour
+    topic: "jours_feries/anniversaire_du_jour"
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+##### EDF TEMPO ############################
+
+  - platform: mqtt_subscribe
+    name: "Tempo couleur actuelle"
+    id: tempo_couleur_actuelle
+    topic: "edf/tempo/couleur_actuelle"
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true
+
+  - platform: mqtt_subscribe
+    name: "Tempo prochaine couleur"
+    id: tempo_prochaine_couleur
+    topic: "edf/tempo/prochaine_couleur"
+    on_value:
+      then:
+        - script.execute: update_screen
+    internal: true

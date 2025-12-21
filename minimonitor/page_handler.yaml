@@ -1,0 +1,89 @@
+globals:
+
+  - id: current_page
+    type: int
+    restore_value: no
+    initial_value: '-1' # Prevents start on page 1
+
+  - id: number_of_pages
+    type: int
+    restore_value: no
+    initial_value: '5'
+
+  - id: auto_scroll
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  - id: boot_mode
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+
+switch:
+
+  - platform: template
+    name: "Défilement automatique"
+    id: switch_auto_scroll
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(auto_scroll) = true;
+      - script.execute: update_page_select
+    turn_off_action:
+      - lambda: id(auto_scroll) = false;
+      - script.execute: update_page_select
+
+select:
+
+  - platform: template
+    name: "Page affichée"
+    id: page_select
+    options:
+      - "Horloge"
+      - "Climat"
+      - "Saint du jour"
+      - "Anniversaire du jour"
+      - "EDF Tempo"
+    initial_option: "Horloge"
+    optimistic: true
+    on_value:
+      then:
+        - script.execute: update_page_select
+
+script:
+
+  - id: update_screen
+    mode: restart
+    then:
+      - delay: 1s
+      - component.update: screen
+
+  - id: update_page_select
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return !id(boot_mode);'
+          then:
+            - lambda: |-
+                  auto page = id(page_select).current_option();
+                  if (page == "Horloge") id(current_page) = 0;
+                  else if (page == "Climat") id(current_page) = 1;
+                  else if (page == "Saint du jour") id(current_page) = 2;
+                  else if (page == "Anniversaire du jour") id(current_page) = 3;
+                  else if (page == "EDF Tempo") id(current_page) = 4;
+            - script.execute: update_screen
+
+interval:
+
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(auto_scroll)  && !id(boot_mode);'
+          then:
+            - lambda: |-
+                id(current_page) = (id(current_page) + 1) % id(number_of_pages);
+            - script.execute: update_screen
