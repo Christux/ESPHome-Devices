@@ -15,8 +15,8 @@ api:
 logger:
 
 ota:
-- platform: esphome
-  password: !secret ota_password
+  - platform: esphome
+    password: !secret ota_password
 
 captive_portal:
 
