@@ -18,32 +18,33 @@ Each project is standalone but shares a common base configuration to simplify ma
 ---
 
 ## Repository Structure
-ESPHome-Devices/  
-├── .gitignore  
-├── common  
-│   ├── common-smart-mood-light.yaml  
-│   └── common.yaml  
-├── esp-lampe-chevet.yaml  
-├── esp-lampe-couloir.yaml  
-├── esp-plug-2x.yaml  
-├── fonts  
-│   ├── materialdesignicons-webfont.ttf  
-│   └── weathericons-regular-webfont.ttf  
-├── images  
-│   └── angry_unicorn.png  
-├── LICENSE  
-├── minimonitor  
-│   ├── display_lambda.yaml  
-│   ├── page_handler.yaml  
-│   ├── sensor.yaml  
-│   └── theme.yaml  
-├── minimonitor.yaml  
-├── readme.md  
-├── secrets.yaml  
-├── smart-mood-light-ii.yaml  
-├── smart-mood-light-iii.yaml  
-└── smart-mood-light.yaml  
-  
+```
+ESPHome-Devices/
+├── common
+│   ├── common-smart-mood-light.yaml
+│   └── common.yaml
+├── esp-lampe-chevet.yaml
+├── esp-lampe-couloir.yaml
+├── esp-plug-2x.yaml
+├── fonts
+│   ├── materialdesignicons-webfont.ttf
+│   └── weathericons-regular-webfont.ttf
+├── images
+│   └── angry_unicorn.png
+├── LICENSE
+├── minimonitor
+│   ├── display_lambda.yaml
+│   ├── page_handler.yaml
+│   ├── sensor.yaml
+│   └── theme.yaml
+├── minimonitor.yaml
+├── readme.md
+├── secrets.yaml
+├── smart-mood-light-ii.yaml
+├── smart-mood-light-iii.yaml
+├── smart-mood-light.yaml
+└── .gitignore
+```  
 ---
 
 ## Projects
