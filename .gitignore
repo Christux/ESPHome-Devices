@@ -5,3 +5,4 @@
 /secrets.yaml
 /archive/
 .venv/
+.DS_Store
