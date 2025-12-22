@@ -13,20 +13,36 @@ Each project is standalone but shares a common base configuration to simplify ma
 | **Hallway Lamp** | `esp-lampe-couloir.yaml` | ESP8266 | Automatic hallway light | Motion or schedule-based control, HA integration |
 | **Dual Smart Plug** | `esp-plug-2x.yaml` | ESP8266 | Dual controllable smart plug | Two independent outlets, optional power monitoring |
 | **Smart Mood Lights (x3)** | `smart-mood-light.yaml`, `smart-mood-light-ii.yaml`, `smart-mood-light-iii.yaml` | **BK7231N (LSC Smart Connect)** | Commercial LSC Smart Connect lamps reflashed with ESPHome | RGB control, local-only operation, shared config (`common-smart-mood-light.yaml`) |
+| **Mini Monitor** | `minimonitor.yaml` | ESP32 | Smart weather clock | Clock display, temperature sensor display, birthdays, etc. | 
 
 ---
 
 ## Repository Structure
 ESPHome-Devices/  
-├── common.yaml  
-├── common-smart-mood-light.yaml  
+├── .gitignore  
+├── common  
+│   ├── common-smart-mood-light.yaml  
+│   └── common.yaml  
 ├── esp-lampe-chevet.yaml  
 ├── esp-lampe-couloir.yaml  
 ├── esp-plug-2x.yaml  
-├── smart-mood-light.yaml  
+├── fonts  
+│   ├── materialdesignicons-webfont.ttf  
+│   └── weathericons-regular-webfont.ttf  
+├── images  
+│   └── angry_unicorn.png  
+├── LICENSE  
+├── minimonitor  
+│   ├── display_lambda.yaml  
+│   ├── page_handler.yaml  
+│   ├── sensor.yaml  
+│   └── theme.yaml  
+├── minimonitor.yaml  
+├── readme.md  
+├── secrets.yaml  
 ├── smart-mood-light-ii.yaml  
 ├── smart-mood-light-iii.yaml  
-└── .gitignore  
+└── smart-mood-light.yaml  
   
 ---
 
@@ -66,6 +82,14 @@ Shared configuration and substitutions are defined in `common-smart-mood-light.y
 Features:
 - Custom lighting effects  
 - Shared configuration via `common-smart-mood-light.yaml`
+
+### Mini Monitor (`minimonitor.yaml`)
+A **smart weather clock** powered by ESPHome and integrated with Home Assistant and MQTT.
+Features:
+- Clock
+- Sensors like temperature
+- Birthdays
+- Everything you want monitor..
 
 ### Common Files
 - **`common.yaml`**: shared parameters (Wi-Fi, API, OTA, etc.)
