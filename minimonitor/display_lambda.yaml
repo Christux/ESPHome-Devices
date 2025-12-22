@@ -152,7 +152,7 @@
     case 3:
       it.print(120, 32, id(font_32), id(blue), TextAlign::CENTER, "Anniversaire");
 
-      if(id(saint_du_jour).has_state()) {
+      if(id(anniversaire_du_jour).has_state()) {
         if(id(anniversaire_du_jour).state == "--") {
           it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, "Aucun");
         }
