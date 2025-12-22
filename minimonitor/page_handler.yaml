@@ -85,5 +85,12 @@ interval:
             lambda: 'return id(auto_scroll)  && !id(boot_mode);'
           then:
             - lambda: |-
-                id(current_page) = (id(current_page) + 1) % id(number_of_pages);
+                int page = id(current_page) + 1;
+
+                if(page == 3 && id(anniversaire_du_jour).has_state()) {
+                  if(id(anniversaire_du_jour).state == "--") page++;
+                }
+
+                id(current_page) = page % id(number_of_pages);
+                
             - script.execute: update_screen
