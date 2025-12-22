@@ -74,6 +74,7 @@ script:
                   else if (page == "Saint du jour") id(current_page) = 2;
                   else if (page == "Anniversaire du jour") id(current_page) = 3;
                   else if (page == "EDF Tempo") id(current_page) = 4;
+                  return;
             - script.execute: update_screen
 
 interval:
@@ -92,5 +93,6 @@ interval:
                 }
 
                 id(current_page) = page % id(number_of_pages);
-                
+                return;
+
             - script.execute: update_screen
