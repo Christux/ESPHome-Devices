@@ -9,7 +9,7 @@ esphome:
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
 
-<<: !include common.yaml
+<<: !include common-bk.yaml
 
 logger:
   level: INFO

@@ -19,7 +19,7 @@ esp32:
     type: esp-idf
 
 packages:
-  common-base: !include common/common.yaml
+  common-base: !include common/common-esp.yaml
 
 ota:
   - platform: esphome
