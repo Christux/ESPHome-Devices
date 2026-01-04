@@ -143,13 +143,13 @@ light:
               //this is where you can reverse the effect by switching the commented out lines in all 3 places.
               if( t192 > 0x80) {                     // hottest
                 //it[it.size() - Pixel - 1] = ESPColor(255, 255, heatramp);
-                it[Pixel] = ESPColor(255, 255, heatramp);
+                it[Pixel] = Color(255, 255, heatramp);
               } else if( t192 > 0x40 ) {             // middle
                 //it[it.size() - Pixel - 1] = ESPColor(255, heatramp, 0);
-                it[Pixel] = ESPColor(255, heatramp, 0);
+                it[Pixel] = Color(255, heatramp, 0);
               } else {                               // coolest
                 //it[it.size() - Pixel - 1] = ESPColor(heatramp, 0, 0);
-                it[Pixel] = ESPColor(heatramp, 0, 0);
+                it[Pixel] = Color(heatramp, 0, 0);
               }
             }
 
