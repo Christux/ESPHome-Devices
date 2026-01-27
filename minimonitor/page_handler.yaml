@@ -75,7 +75,7 @@ script:
                   else if (page == "Anniversaire du jour") id(current_page) = 3;
                   else if (page == "EDF Tempo") id(current_page) = 4;
                   return;
-            - script.execute: update_screen
+      - script.execute: update_screen
 
 interval:
 
