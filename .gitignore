@@ -6,3 +6,4 @@
 /archive/
 .venv/
 .DS_Store
+requirements.txt
