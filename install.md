@@ -21,6 +21,10 @@ pip install esphome
 ```
 source .venv/bin/activate
 ```
+### Run dashboard
+```
+esphome dashboard .
+```
 ### Compile and upload firmware in device
 ```
 esphome run minimonitor.yaml --device OTA
