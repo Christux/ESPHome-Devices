@@ -1,6 +1,15 @@
+# https://www.lcdwiki.com/2.8inch_ESP32-32E-7789
+
 esphome:
   name: cyd-monitor
   friendly_name: CYD-Monitor
+
+  on_boot:
+    - priority: -100
+      then:
+        - light.turn_on:
+            id: backlight
+            brightness: 40%
 
 esp32:
   board: esp32dev
@@ -8,7 +17,7 @@ esp32:
     type: esp-idf
     advanced:
       minimum_chip_revision: '3.1'
-  
+
 packages:
   common-base: !include common/common-esp.yaml
 
@@ -135,6 +144,7 @@ touchscreen:
             id: touch_circle
             x: !lambda 'return touch.x - 10;'
             y: !lambda 'return touch.y - 10;'
+
 lvgl:
   buffer_size: 25%
   draw_rounding: 2
