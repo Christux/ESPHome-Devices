@@ -33,5 +33,3 @@ esphome clean minimonitor.yaml
 ```
 tree -a -I "__pycache__|.git|.esphome|.venv"
 ```
-
-

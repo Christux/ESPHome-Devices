@@ -122,7 +122,7 @@ binary_sensor:
                   id(effect_index)=0;
                 } else {
                   for(int i = 0; i <= total_effects; i++) {
-                    this_effect=id(color_led).get_effects().at(i)->get_name();//.c_str();
+                    this_effect=id(color_led).get_effects().at(i)->get_name();
                     if (this_effect==actual_effect) {
                       id(effect_index)=i+1;
                       break;
@@ -137,7 +137,10 @@ binary_sensor:
                 if (id(effect_index)==-1) {
                   id(color_led).turn_on().set_effect("None").perform();
                 } else {
-                  id(color_led).turn_on().set_effect(id(color_led).get_effects().at(id(effect_index))->get_name()/*.c_str()*/).perform();
+                  auto call = id(color_led).turn_on();
+                  std::string effect = id(color_led).get_effects().at(id(effect_index))->get_name();
+                  call.set_effect(effect.c_str());
+                  call.perform();
                 }
                 return;
 
