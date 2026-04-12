@@ -93,6 +93,25 @@ light:
     green: output_green
     blue: output_blue
     restore_mode: ALWAYS_OFF
+    effects:
+      - lambda:
+          name: Color cycle
+          update_interval: 5s
+          lambda: |-
+            static int state = 0;
+            static float colors[] = {1., 1., 1., .5, .0, .0, .0, .0, .0, .5, 1., 1.};
+            auto call = id(led).turn_on();
+            call.set_transition_length(1000);
+            int ridx = state;
+            int gidx = ridx + 8 < 12 ? ridx + 8 : ridx - 4;
+            int bidx = ridx + 4 < 12 ? ridx + 4 : ridx - 8;
+            call.set_rgb(colors[ridx], colors[gidx], colors[bidx]);
+            call.perform();
+            state = state < 11 ? state + 1 : 0;
+            return;
+      - random:
+      - flicker:
+      - pulse:
 
 display:
   - id: main_display
