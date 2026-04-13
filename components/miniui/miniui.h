@@ -9,20 +9,24 @@ namespace esphome
 {
   namespace miniui
   {
+    using BodyFn = std::function<void(display::Display &)>;
+    using GuardFn = std::function<bool()>;
+
     class Page
     {
     public:
       void set_title(const std::string &title);
-      void set_body(std::function<void(display::Display &)> &&body);
-      void set_guard(std::function<bool()> &&guard);
+      void set_body(BodyFn &&body);
+      void set_guard(GuardFn &&guard);
       bool is_visible() const;
       const std::string &get_title() const;
       void render_body(display::Display &it) const;
+      void render(display::Display &it);
 
     protected:
       std::string title_;
-      std::function<void(display::Display &)> body_;
-      std::function<bool()> guard_;
+      BodyFn body_;
+      GuardFn guard_;
     };
 
     class MiniUI : public Component
@@ -36,11 +40,14 @@ namespace esphome
       void next_page();
       void prev_page();
       void render(display::Display &it);
+      int get_current_index() const;
+      Page *get_current_page();
+      void update();
 
     protected:
       display::Display *display_{nullptr};
       std::vector<Page *> pages_;
-      size_t current_{0};
+      size_t current_index_{0};
     };
 
   } // namespace miniui
