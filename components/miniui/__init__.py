@@ -19,8 +19,12 @@ CONF_GUARD = "guard"
 PAGE_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Page),
     cv.Required(CONF_TITLE): cv.string,
-    cv.Required(CONF_BODY): cv.lambda_,
-    cv.Optional(CONF_GUARD): cv.lambda_,
+    cv.Required(CONF_BODY): cv.Schema({
+        cv.Required("lambda"): cv.lambda_,
+    }),
+    cv.Optional(CONF_GUARD): cv.Schema({
+        cv.Required("lambda"): cv.lambda_,
+    }),
 })
 
 CONFIG_SCHEMA = cv.Schema({
@@ -43,7 +47,7 @@ async def to_code(config):
         cg.add(page.set_title(conf[CONF_TITLE]))
 
         body = await cg.process_lambda(
-            conf[CONF_BODY],
+            conf[CONF_BODY]["lambda"],
             [(display.DisplayRef, "it")],
             return_type=cg.void
         )
@@ -51,7 +55,7 @@ async def to_code(config):
 
         if CONF_GUARD in conf:
             guard = await cg.process_lambda(
-                conf[CONF_GUARD],
+                conf[CONF_GUARD]["lambda"],
                 [],
                 return_type=cg.bool_
             )

@@ -101,207 +101,221 @@ miniui:
 
   pages:
     - title: Boot
-      guard: return id(boot_mode);
-      body: |-
-        it.image(120, 120, id(angry_unicorn), ImageAlign::CENTER);
-        return;
+      guard:
+        lambda: return id(boot_mode);
+      body: 
+        lambda: |-
+          it.image(120, 120, id(angry_unicorn), ImageAlign::CENTER);
+          return;
 
     - title: OTA
-      guard: return id(ota_mode);
-      body: |-
-        it.fill(id(red));
-        it.print(120, 120, id(font_32), id(light_gray), TextAlign::CENTER, "OTA Update..");
-        return;
+      guard:
+        lambda: return id(ota_mode);
+      body:
+        lambda: |-
+          it.fill(id(red));
+          it.print(120, 120, id(font_32), id(light_gray), TextAlign::CENTER, "OTA Update..");
+          return;
 
     - title: Horloge
-      guard: return !id(boot_mode) && !id(ota_mode);
-      body: |-
-        const char* days[] = {"DIM","LUN","MAR","MER","JEU","VEN","SAM"};
-        const char* months[] = {"JAN","FEV", "MARS", "AVRIL", "MAI", "JUIN", "JUIL", "AOUT", "SEPT", "OCT", "NOV", "DEC"};
+      guard:
+        lambda: return !id(boot_mode) && !id(ota_mode);
+      body:
+        lambda: |-
+          const char* days[] = {"DIM","LUN","MAR","MER","JEU","VEN","SAM"};
+          const char* months[] = {"JAN","FEV", "MARS", "AVRIL", "MAI", "JUIN", "JUIL", "AOUT", "SEPT", "OCT", "NOV", "DEC"};
 
-        auto now = id(sntp_time).now();
+          auto now = id(sntp_time).now();
 
-        auto draw_date = [&]() {
+          auto draw_date = [&]() {
+
+            if (now.is_valid()) {
+              char date_str[16];
+                
+              snprintf(date_str, sizeof(date_str), "%s %02d %s", 
+                      days[now.day_of_week-1], now.day_of_month, 
+                      months[now.month-1]);
+              
+              it.print(120, 210, id(font_32), id(green), TextAlign::CENTER, date_str);
+            }
+            else {
+              it.print(120, 210, id(font_32), id(green), TextAlign::CENTER, "--- -- ---");
+            }
+          };
 
           if (now.is_valid()) {
-            char date_str[16];
-              
-            snprintf(date_str, sizeof(date_str), "%s %02d %s", 
-                    days[now.day_of_week-1], now.day_of_month, 
-                    months[now.month-1]);
-            
-            it.print(120, 210, id(font_32), id(green), TextAlign::CENTER, date_str);
+            it.strftime(8, 16, id(font_extra_big), id(orange), TextAlign::TOP_LEFT, "%H", now);
+            it.strftime(232, 180, id(font_extra_big), id(purple), TextAlign::BOTTOM_RIGHT, "%M", now);
+          } else {
+            it.printf(8, 16, id(font_extra_big), id(orange), TextAlign::TOP_LEFT, "--");
+            it.printf(232, 180, id(font_extra_big), id(purple), TextAlign::BOTTOM_RIGHT, "--");
           }
-          else {
-            it.print(120, 210, id(font_32), id(green), TextAlign::CENTER, "--- -- ---");
-          }
-        };
-
-        if (now.is_valid()) {
-          it.strftime(8, 16, id(font_extra_big), id(orange), TextAlign::TOP_LEFT, "%H", now);
-          it.strftime(232, 180, id(font_extra_big), id(purple), TextAlign::BOTTOM_RIGHT, "%M", now);
-        } else {
-          it.printf(8, 16, id(font_extra_big), id(orange), TextAlign::TOP_LEFT, "--");
-          it.printf(232, 180, id(font_extra_big), id(purple), TextAlign::BOTTOM_RIGHT, "--");
-        }
-        draw_date();
-        return;
+          draw_date();
+          return;
     
     - title: Climat
-      guard: return !id(boot_mode) && !id(ota_mode);
-      body: |-
-        auto temp_color = [&](float t) -> Color {
-    
-          if (t < 19.0f) {
-            return id(blue);
-          }
+      guard:
+        lambda: return !id(boot_mode) && !id(ota_mode);
+      body:
+        lambda: |-
+          auto temp_color = [&](float t) -> Color {
+      
+            if (t < 19.0f) {
+              return id(blue);
+            }
 
-          if (t >= 24.0f) {
-            return id(red);
-          }
+            if (t >= 24.0f) {
+              return id(red);
+            }
 
-          return id(green);
-        };
+            return id(green);
+          };
 
-        auto hum_color = [&](float h) -> Color {
-          
-          if (h > 50.0f) {
-            return id(violet);
-          }
+          auto hum_color = [&](float h) -> Color {
+            
+            if (h > 50.0f) {
+              return id(violet);
+            }
 
-          return id(orange);
-        };
+            return id(orange);
+          };
 
-        auto draw_room = [&](int x, int y,
-                        const char* name,
-                        float temp,
-                        float hum) {
-          char buf[16];
-          auto tc = temp_color(temp);
-          auto hc = hum_color(hum);
+          auto draw_room = [&](int x, int y,
+                          const char* name,
+                          float temp,
+                          float hum) {
+            char buf[16];
+            auto tc = temp_color(temp);
+            auto hc = hum_color(hum);
 
-          // Nom de la pièce
-          it.print(x, y, id(font_24), id(white),
-                  TextAlign::TOP_LEFT, name);
+            // Nom de la pièce
+            it.print(x, y, id(font_24), id(white),
+                    TextAlign::TOP_LEFT, name);
 
-          // --- Température ---
-          it.print(x, y + 32, id(font_icons), tc,
-                  TextAlign::TOP_LEFT, "\uf055");
+            // --- Température ---
+            it.print(x, y + 32, id(font_icons), tc,
+                    TextAlign::TOP_LEFT, "\uf055");
 
-          snprintf(buf, sizeof(buf), " %.1f°C", temp);
-          it.print(x + 22, y + 32, id(font_24), tc,
-                  TextAlign::TOP_LEFT, buf);
+            snprintf(buf, sizeof(buf), " %.1f°C", temp);
+            it.print(x + 22, y + 32, id(font_24), tc,
+                    TextAlign::TOP_LEFT, buf);
 
-          // --- Humidité ---
-          it.print(x, y + 64, id(font_icons), hc,
-                  TextAlign::TOP_LEFT, "\uf07a");
+            // --- Humidité ---
+            it.print(x, y + 64, id(font_icons), hc,
+                    TextAlign::TOP_LEFT, "\uf07a");
 
-          snprintf(buf, sizeof(buf), " %.0f%%", hum);
-          it.print(x + 22, y + 70, id(font_24), hc,
-                  TextAlign::TOP_LEFT, buf);
-        };
+            snprintf(buf, sizeof(buf), " %.0f%%", hum);
+            it.print(x + 22, y + 70, id(font_24), hc,
+                    TextAlign::TOP_LEFT, buf);
+          };
 
-        if (id(temp_salon).has_state() && id(hum_salon).has_state()) {
-        draw_room(10, 10,  "Salon", id(temp_salon).state, id(hum_salon).state);
-        }
-        else {
-          draw_room(10, 10,  "Salon", -88, -88);
-        }
-
-        if (id(temp_chambre).has_state() && id(hum_chambre).has_state()) {
-          draw_room(130, 10,  "Chambre", id(temp_chambre).state, id(hum_chambre).state);
-        }
-        else {
-          draw_room(130, 10,  "Chambre", -88, -88);
-        }
-
-        if (id(temp_chloe).has_state() && id(hum_chloe).has_state()) {
-          draw_room(10, 130,  "Chloé", id(temp_chloe).state, id(hum_chloe).state);
-        }
-        else {
-          draw_room(10, 130,  "Chloé", -88, -88);
-        }
-
-        if (id(temp_balcon).has_state() && id(hum_balcon).has_state()) {
-          draw_room(130, 130,  "Balcon", id(temp_balcon).state, id(hum_balcon).state);
-        }
-        else {
-          draw_room(130, 130,  "Balcon", -88, -88);
-        }
-
-        return;
-
-    - title: Saint
-      guard: return !id(boot_mode) && !id(ota_mode);
-      body: |-
-        it.print(120, 32, id(font_32), id(blue), TextAlign::CENTER, "Saint du jour");
-
-        if(id(saint_du_jour).has_state()) {
-          it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, id(saint_du_jour).state.c_str());
-        }
-        else {
-          it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, "-------");
-        }
-
-        //draw_date();
-
-        return;
-
-    - title: Anniversaire
-      guard: return !id(boot_mode) && !id(ota_mode) && id(anniversaire_du_jour).state != "--";
-      body: |-
-        it.print(120, 32, id(font_32), id(blue), TextAlign::CENTER, "Anniversaire");
-
-        if(id(anniversaire_du_jour).has_state()) {
-          if(id(anniversaire_du_jour).state == "--") {
-            it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, "Aucun");
+          if (id(temp_salon).has_state() && id(hum_salon).has_state()) {
+          draw_room(10, 10,  "Salon", id(temp_salon).state, id(hum_salon).state);
           }
           else {
-            it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, id(anniversaire_du_jour).state.c_str());
+            draw_room(10, 10,  "Salon", -88, -88);
           }
-        }
-        else {
-          it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, "--------");
-        }
 
-        //draw_date();
+          if (id(temp_chambre).has_state() && id(hum_chambre).has_state()) {
+            draw_room(130, 10,  "Chambre", id(temp_chambre).state, id(hum_chambre).state);
+          }
+          else {
+            draw_room(130, 10,  "Chambre", -88, -88);
+          }
 
-        return;
+          if (id(temp_chloe).has_state() && id(hum_chloe).has_state()) {
+            draw_room(10, 130,  "Chloé", id(temp_chloe).state, id(hum_chloe).state);
+          }
+          else {
+            draw_room(10, 130,  "Chloé", -88, -88);
+          }
+
+          if (id(temp_balcon).has_state() && id(hum_balcon).has_state()) {
+            draw_room(130, 130,  "Balcon", id(temp_balcon).state, id(hum_balcon).state);
+          }
+          else {
+            draw_room(130, 130,  "Balcon", -88, -88);
+          }
+
+          return;
+
+    - title: Saint
+      guard:
+        lambda: return !id(boot_mode) && !id(ota_mode);
+      body:
+        lambda: |-
+          it.print(120, 32, id(font_32), id(blue), TextAlign::CENTER, "Saint du jour");
+
+          if(id(saint_du_jour).has_state()) {
+            it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, id(saint_du_jour).state.c_str());
+          }
+          else {
+            it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, "-------");
+          }
+
+          //draw_date();
+
+          return;
+
+    - title: Anniversaire
+      guard:
+        lambda: return !id(boot_mode) && !id(ota_mode) && id(anniversaire_du_jour).state != "--";
+      body:
+        lambda: |-
+          it.print(120, 32, id(font_32), id(blue), TextAlign::CENTER, "Anniversaire");
+
+          if(id(anniversaire_du_jour).has_state()) {
+            if(id(anniversaire_du_jour).state == "--") {
+              it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, "Aucun");
+            }
+            else {
+              it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, id(anniversaire_du_jour).state.c_str());
+            }
+          }
+          else {
+            it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, "--------");
+          }
+
+          //draw_date();
+
+          return;
 
     - title: EDF Tempo
-      guard: return !id(boot_mode) && !id(ota_mode);
-      body: |-
-        auto tempo_color = [&](std::string color) -> Color {
-    
-          if (color == "Rouge") {
-            return id(red);
+      guard:
+        lambda: return !id(boot_mode) && !id(ota_mode);
+      body:
+        lambda: |-
+          auto tempo_color = [&](std::string color) -> Color {
+      
+            if (color == "Rouge") {
+              return id(red);
+            }
+            
+            if (color == "Blanc") {
+              return id(white);
+            }
+
+            return id(blue);
+          };
+
+          it.print(120, 32, id(font_32), id(blue), TextAlign::CENTER, "EDF Tempo");
+
+          it.print(0, 80, id(font_24), id(light_gray), TextAlign::TOP_LEFT, "Aujourd'hui");
+
+          if(id(tempo_couleur_actuelle).has_state()) {
+            it.print(120, 130, id(font_32), tempo_color(id(tempo_couleur_actuelle).state), TextAlign::CENTER, id(tempo_couleur_actuelle).state.c_str());
           }
-          
-          if (color == "Blanc") {
-            return id(white);
+          else {
+            it.print(120, 130, id(font_32), id(blue), TextAlign::CENTER, "------");
           }
 
-          return id(blue);
-        };
+          it.print(0, 160, id(font_24), id(light_gray), TextAlign::TOP_LEFT, "Demain");
 
-        it.print(120, 32, id(font_32), id(blue), TextAlign::CENTER, "EDF Tempo");
+          if(id(tempo_prochaine_couleur).has_state()) {
+            it.print(120, 210, id(font_32), tempo_color(id(tempo_prochaine_couleur).state), TextAlign::CENTER, id(tempo_prochaine_couleur).state.c_str());
+          }
+          else {
+            it.print(120, 210, id(font_32), id(blue), TextAlign::CENTER, "------");
+          }
 
-        it.print(0, 80, id(font_24), id(light_gray), TextAlign::TOP_LEFT, "Aujourd'hui");
-
-        if(id(tempo_couleur_actuelle).has_state()) {
-          it.print(120, 130, id(font_32), tempo_color(id(tempo_couleur_actuelle).state), TextAlign::CENTER, id(tempo_couleur_actuelle).state.c_str());
-        }
-        else {
-          it.print(120, 130, id(font_32), id(blue), TextAlign::CENTER, "------");
-        }
-
-        it.print(0, 160, id(font_24), id(light_gray), TextAlign::TOP_LEFT, "Demain");
-
-        if(id(tempo_prochaine_couleur).has_state()) {
-          it.print(120, 210, id(font_32), tempo_color(id(tempo_prochaine_couleur).state), TextAlign::CENTER, id(tempo_prochaine_couleur).state.c_str());
-        }
-        else {
-          it.print(120, 210, id(font_32), id(blue), TextAlign::CENTER, "------");
-        }
-
-        return;
+          return;
