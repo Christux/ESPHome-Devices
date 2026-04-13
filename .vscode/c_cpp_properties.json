@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "name": "ESPHOME",
+
+      "compilerPath": "/usr/bin/clang++",
+      "intelliSenseMode": "gcc-x64",
+
+      "cppStandard": "gnu++17",
+      "cStandard": "gnu11",
+
+      "includePath": [
+        "${env:HOME}/.platformio/packages/framework-arduinoespressif32/**",
+        "${env:HOME}/.platformio/packages/framework-espidf/**",
+        "${env:HOME}/.platformio/packages/toolchain-xtensa-esp-elf/**",
+
+        "${workspaceFolder}/components/**",
+        "${workspaceFolder}/.esphome/**"
+      ],
+
+      "defines": [
+        "USE_ESP32",
+        "ESP_PLATFORM",
+        "ARDUINO=10805"
+      ]
+    }
+  ],
+  "version": 4
+}

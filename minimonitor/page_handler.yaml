@@ -20,6 +20,10 @@ globals:
     restore_value: no
     initial_value: 'true'
 
+  - id: ota_mode
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 switch:
 
@@ -86,13 +90,16 @@ interval:
             lambda: 'return id(auto_scroll)  && !id(boot_mode);'
           then:
             - lambda: |-
-                int page = id(current_page) + 1;
+                /*int page = id(current_page) + 1;
 
                 if(page == 3 && id(anniversaire_du_jour).has_state()) {
                   if(id(anniversaire_du_jour).state == "--") page++;
                 }
 
-                id(current_page) = page % id(number_of_pages);
+                id(current_page) = page % id(number_of_pages);*/
+
+                id(ui).next_page();
+
                 return;
 
       - script.execute: update_screen
