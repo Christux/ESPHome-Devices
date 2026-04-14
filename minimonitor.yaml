@@ -126,7 +126,7 @@ miniui:
     - title: Boot
       guard:
         lambda: return id(boot_mode);
-      body: 
+      content: 
         lambda: |-
           it.image(120, 120, id(angry_unicorn), ImageAlign::CENTER);
           return;
@@ -134,7 +134,7 @@ miniui:
     - title: OTA
       guard:
         lambda: return id(ota_mode);
-      body:
+      content:
         lambda: |-
           it.fill(id(red));
           it.print(120, 120, id(font_32), id(light_gray), TextAlign::CENTER, "OTA Update..");
@@ -143,7 +143,7 @@ miniui:
     - title: Horloge
       guard:
         lambda: return !id(boot_mode) && !id(ota_mode);
-      body:
+      content:
         lambda: |-
           auto now = id(sntp_time).now();
 
@@ -160,7 +160,7 @@ miniui:
     - title: Climat
       guard:
         lambda: return !id(boot_mode) && !id(ota_mode);
-      body:
+      content:
         lambda: |-
           auto temp_color = [&](float t) -> Color {
       
@@ -246,7 +246,7 @@ miniui:
     - title: Saint
       guard:
         lambda: return !id(boot_mode) && !id(ota_mode);
-      body:
+      content:
         lambda: |-
           it.print(120, 32, id(font_32), id(blue), TextAlign::CENTER, "Saint du jour");
 
@@ -265,7 +265,7 @@ miniui:
     - title: Anniversaire
       guard:
         lambda: return !id(boot_mode) && !id(ota_mode) && id(anniversaire_du_jour).state != "--";
-      body:
+      content:
         lambda: |-
           it.print(120, 32, id(font_32), id(blue), TextAlign::CENTER, "Anniversaire");
 
@@ -289,7 +289,7 @@ miniui:
     - title: EDF Tempo
       guard:
         lambda: return !id(boot_mode) && !id(ota_mode);
-      body:
+      content:
         lambda: |-
           auto tempo_color = [&](std::string color) -> Color {
       

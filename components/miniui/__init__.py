@@ -16,7 +16,7 @@ CONF_PAGES = "pages"
 CONF_HELPERS = "helpers"
 CONF_NAME = "name"
 CONF_TITLE = "title"
-CONF_BODY = "body"
+CONF_CONTENT = "content"
 CONF_GUARD = "guard"
 
 HELPER_SCHEMA = cv.Schema({
@@ -27,7 +27,7 @@ HELPER_SCHEMA = cv.Schema({
 PAGE_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Page),
     cv.Required(CONF_TITLE): cv.string,
-    cv.Required(CONF_BODY): cv.Schema({
+    cv.Required(CONF_CONTENT): cv.Schema({
         cv.Required("lambda"): cv.lambda_,
     }),
     cv.Optional(CONF_GUARD): cv.Schema({
@@ -77,7 +77,7 @@ async def to_code(config):
         cg.add(page.set_title(conf[CONF_TITLE]))
 
         body = await cg.process_lambda(
-            conf[CONF_BODY]["lambda"],
+            conf[CONF_CONTENT]["lambda"],
             [
                 (display.DisplayRef, "it"), 
                 (MiniUIRef, "ui"),
