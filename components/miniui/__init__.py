@@ -19,9 +19,14 @@ CONF_TITLE = "title"
 CONF_BODY = "body"
 CONF_GUARD = "guard"
 
+# HELPER_SCHEMA = cv.Schema({
+#     cv.GenerateID(): cv.declare_id(Helper),
+#     cv.Required(CONF_NAME): cv.string,
+#     cv.Required("lambda"): cv.lambda_,
+# })
+
 HELPER_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Helper),
-    cv.Required(CONF_NAME): cv.string,
     cv.Required("lambda"): cv.lambda_,
 })
 
@@ -40,7 +45,9 @@ CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(MiniUI),
     cv.Required(CONF_DISPLAY_ID): cv.use_id(display.Display),
     cv.Required(CONF_PAGES): cv.ensure_list(PAGE_SCHEMA),
-    cv.Optional(CONF_HELPERS): cv.ensure_list(HELPER_SCHEMA),
+    cv.Optional(CONF_HELPERS): cv.Schema({
+        cv.string: HELPER_SCHEMA,
+    }),
 }).extend(cv.COMPONENT_SCHEMA)
 
 
@@ -52,16 +59,13 @@ async def to_code(config):
     cg.add(var.set_display(disp))
 
     if CONF_HELPERS in config:
-        for helper_conf in config[CONF_HELPERS]:
+        for helper_name, helper_conf in config.get(CONF_HELPERS, {}).items():
+            
             helper = cg.new_Pvariable(helper_conf[CONF_ID])
-            helper_name = helper_conf[CONF_NAME]
             
             helper_lambda = await cg.process_lambda(
                 helper_conf["lambda"],
-                [
-                    (display.DisplayRef, "it"), 
-                    (miniui_ns.class_("MiniUI").operator("ptr"), "ui"),
-                ],
+                [(display.DisplayRef, "it"), (miniui_ns.class_("MiniUI").operator("ptr"), "ui")],
                 return_type=cg.void
             )
             

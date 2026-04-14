@@ -55,14 +55,14 @@ namespace esphome
       void set_display(display::Display *display);
       void add_page(Page *page);
       void add_helper(Helper *helper);
+      void call_helper(const std::string &name, display::Display &it);
+      bool has_helper(const std::string &name) const;
       void next_page();
       void prev_page();
       void render(display::Display &it);
       int get_current_index() const;
       Page *get_current_page();
       void update();
-      void call_helper(const std::string &name, display::Display &it);
-      bool has_helper(const std::string &name) const;
 
     protected:
       display::Display *display_{nullptr};

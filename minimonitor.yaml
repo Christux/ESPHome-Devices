@@ -100,7 +100,7 @@ miniui:
   display_id: screen
 
   helpers:
-    - name: date_footer
+    date_footer:
       lambda: |-
         const char* days[] = {"DIM","LUN","MAR","MER","JEU","VEN","SAM"};
         const char* months[] = {"JAN","FEV", "MARS", "AVRIL", "MAI", "JUIN", "JUIL", "AOUT", "SEPT", "OCT", "NOV", "DEC"};
