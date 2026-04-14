@@ -44,7 +44,7 @@ CONFIG_SCHEMA = cv.Schema({
     }),
 }).extend(cv.COMPONENT_SCHEMA)
 
-MiniUIPtr = MiniUI.operator("ptr")
+MiniUIRef = MiniUI.operator("ref")
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
@@ -62,7 +62,7 @@ async def to_code(config):
                 helper_conf["lambda"],
                 [
                     (display.DisplayRef, "it"),
-                    (MiniUIPtr, "ui"),
+                    (MiniUIRef, "ui"),
                 ],
                 return_type=cg.void
             )
@@ -80,7 +80,7 @@ async def to_code(config):
             conf[CONF_BODY]["lambda"],
             [
                 (display.DisplayRef, "it"), 
-                (MiniUIPtr, "ui"),
+                (MiniUIRef, "ui"),
             ],
             return_type=cg.void
         )
@@ -90,7 +90,7 @@ async def to_code(config):
             guard = await cg.process_lambda(
                 conf[CONF_GUARD]["lambda"],
                 [
-                    (MiniUIPtr, "ui"),
+                    (MiniUIRef, "ui"),
                 ],
                 return_type=cg.bool_
             )

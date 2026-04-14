@@ -24,7 +24,7 @@ namespace esphome
         void Helper::call(display::Display &it, MiniUI *ui) const
         {
             if (function_)
-                function_(it, ui);
+                function_(it, *ui);
         }
 
         // Implémentation de Page
@@ -46,14 +46,14 @@ namespace esphome
         bool Page::is_visible(MiniUI *ui) const
         {
             if (guard_)
-                return guard_(ui);
+                return guard_(*ui);
             return true;
         }
 
         void Page::render(display::Display &it, MiniUI *ui)
         {
             if (body_)
-                body_(it, ui);
+                body_(it, *ui);
         }
 
         const std::string &Page::get_title() const
@@ -65,7 +65,7 @@ namespace esphome
         {
             if (body_)
             {
-                body_(it, ui);
+                body_(it, *ui);
             }
             else
             {

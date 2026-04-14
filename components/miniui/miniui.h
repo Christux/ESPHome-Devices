@@ -12,9 +12,9 @@ namespace esphome
   {
     class MiniUI;
 
-    using BodyFn = std::function<void(display::Display &, MiniUI *)>;
-    using GuardFn = std::function<bool(MiniUI *)>;
-    using HelperFn = std::function<void(display::Display &, MiniUI *)>;
+    using BodyFn = std::function<void(display::Display &, MiniUI &)>;
+    using GuardFn = std::function<bool(MiniUI &)>;
+    using HelperFn = std::function<void(display::Display &, MiniUI &)>;
 
     class Helper
     {
