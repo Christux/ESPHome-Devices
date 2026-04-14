@@ -19,12 +19,6 @@ CONF_TITLE = "title"
 CONF_BODY = "body"
 CONF_GUARD = "guard"
 
-# HELPER_SCHEMA = cv.Schema({
-#     cv.GenerateID(): cv.declare_id(Helper),
-#     cv.Required(CONF_NAME): cv.string,
-#     cv.Required("lambda"): cv.lambda_,
-# })
-
 HELPER_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Helper),
     cv.Required("lambda"): cv.lambda_,
@@ -50,6 +44,7 @@ CONFIG_SCHEMA = cv.Schema({
     }),
 }).extend(cv.COMPONENT_SCHEMA)
 
+MiniUIPtr = MiniUI.operator("ptr")
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
@@ -65,7 +60,10 @@ async def to_code(config):
             
             helper_lambda = await cg.process_lambda(
                 helper_conf["lambda"],
-                [(display.DisplayRef, "it"), (miniui_ns.class_("MiniUI").operator("ptr"), "ui")],
+                [
+                    (display.DisplayRef, "it"),
+                    (MiniUIPtr, "ui"),
+                ],
                 return_type=cg.void
             )
             
@@ -82,7 +80,7 @@ async def to_code(config):
             conf[CONF_BODY]["lambda"],
             [
                 (display.DisplayRef, "it"), 
-                (miniui_ns.class_("MiniUI").operator("ptr"), "ui"),
+                (MiniUIPtr, "ui"),
             ],
             return_type=cg.void
         )
@@ -92,7 +90,7 @@ async def to_code(config):
             guard = await cg.process_lambda(
                 conf[CONF_GUARD]["lambda"],
                 [
-                    (miniui_ns.class_("MiniUI").operator("ptr"), "ui"),
+                    (MiniUIPtr, "ui"),
                 ],
                 return_type=cg.bool_
             )
