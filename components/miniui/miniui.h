@@ -4,13 +4,30 @@
 #include "esphome/components/display/display.h"
 #include "esphome/core/log.h"
 #include <vector>
+#include <map>
 
 namespace esphome
 {
   namespace miniui
   {
-    using BodyFn = std::function<void(display::Display &)>;
-    using GuardFn = std::function<bool()>;
+    class MiniUI;
+
+    using BodyFn = std::function<void(display::Display &, MiniUI *)>;
+    using GuardFn = std::function<bool(MiniUI *)>;
+    using HelperFn = std::function<void(display::Display &, MiniUI *)>;
+
+    class Helper
+    {
+    public:
+      void set_name(const std::string &name);
+      void set_function(HelperFn &&func);
+      const std::string &get_name() const;
+      void call(display::Display &it, MiniUI *ui) const;
+
+    protected:
+      std::string name_;
+      HelperFn function_;
+    };
 
     class Page
     {
@@ -18,10 +35,10 @@ namespace esphome
       void set_title(const std::string &title);
       void set_body(BodyFn &&body);
       void set_guard(GuardFn &&guard);
-      bool is_visible() const;
+      bool is_visible(MiniUI *ui) const;
       const std::string &get_title() const;
-      void render_body(display::Display &it) const;
-      void render(display::Display &it);
+      void render_body(display::Display &it, MiniUI *ui) const;
+      void render(display::Display &it, MiniUI *ui);
 
     protected:
       std::string title_;
@@ -37,16 +54,21 @@ namespace esphome
       void dump_config() override;
       void set_display(display::Display *display);
       void add_page(Page *page);
+      void add_helper(Helper *helper);
       void next_page();
       void prev_page();
       void render(display::Display &it);
       int get_current_index() const;
       Page *get_current_page();
       void update();
+      void call_helper(const std::string &name, display::Display &it);
+      bool has_helper(const std::string &name) const;
 
     protected:
       display::Display *display_{nullptr};
       std::vector<Page *> pages_;
+      std::vector<Helper *> helpers_;
+      std::map<std::string, Helper *> helper_map_;
       size_t current_index_{0};
     };
 

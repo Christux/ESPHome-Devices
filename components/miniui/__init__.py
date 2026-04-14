@@ -9,12 +9,21 @@ miniui_ns = cg.esphome_ns.namespace("miniui")
 
 MiniUI = miniui_ns.class_("MiniUI", cg.Component)
 Page = miniui_ns.class_("Page")
+Helper = miniui_ns.class_("Helper")
 
 CONF_DISPLAY_ID = "display_id"
 CONF_PAGES = "pages"
+CONF_HELPERS = "helpers"
+CONF_NAME = "name"
 CONF_TITLE = "title"
 CONF_BODY = "body"
 CONF_GUARD = "guard"
+
+HELPER_SCHEMA = cv.Schema({
+    cv.GenerateID(): cv.declare_id(Helper),
+    cv.Required(CONF_NAME): cv.string,
+    cv.Required("lambda"): cv.lambda_,
+})
 
 PAGE_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Page),
@@ -31,6 +40,7 @@ CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(MiniUI),
     cv.Required(CONF_DISPLAY_ID): cv.use_id(display.Display),
     cv.Required(CONF_PAGES): cv.ensure_list(PAGE_SCHEMA),
+    cv.Optional(CONF_HELPERS): cv.ensure_list(HELPER_SCHEMA),
 }).extend(cv.COMPONENT_SCHEMA)
 
 
@@ -41,6 +51,24 @@ async def to_code(config):
     disp = await cg.get_variable(config[CONF_DISPLAY_ID])
     cg.add(var.set_display(disp))
 
+    if CONF_HELPERS in config:
+        for helper_conf in config[CONF_HELPERS]:
+            helper = cg.new_Pvariable(helper_conf[CONF_ID])
+            helper_name = helper_conf[CONF_NAME]
+            
+            helper_lambda = await cg.process_lambda(
+                helper_conf["lambda"],
+                [
+                    (display.DisplayRef, "it"), 
+                    (miniui_ns.class_("MiniUI").operator("ptr"), "ui"),
+                ],
+                return_type=cg.void
+            )
+            
+            cg.add(helper.set_name(helper_name))
+            cg.add(helper.set_function(helper_lambda))
+            cg.add(var.add_helper(helper))
+
     for conf in config[CONF_PAGES]:
         page = cg.new_Pvariable(conf[CONF_ID])
 
@@ -48,7 +76,10 @@ async def to_code(config):
 
         body = await cg.process_lambda(
             conf[CONF_BODY]["lambda"],
-            [(display.DisplayRef, "it")],
+            [
+                (display.DisplayRef, "it"), 
+                (miniui_ns.class_("MiniUI").operator("ptr"), "ui"),
+            ],
             return_type=cg.void
         )
         cg.add(page.set_body(body))
@@ -56,7 +87,9 @@ async def to_code(config):
         if CONF_GUARD in conf:
             guard = await cg.process_lambda(
                 conf[CONF_GUARD]["lambda"],
-                [],
+                [
+                    (miniui_ns.class_("MiniUI").operator("ptr"), "ui"),
+                ],
                 return_type=cg.bool_
             )
             cg.add(page.set_guard(guard))

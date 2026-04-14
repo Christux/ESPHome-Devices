@@ -99,6 +99,29 @@ miniui:
   id: ui
   display_id: screen
 
+  helpers:
+    - name: date_footer
+      lambda: |-
+        const char* days[] = {"DIM","LUN","MAR","MER","JEU","VEN","SAM"};
+        const char* months[] = {"JAN","FEV", "MARS", "AVRIL", "MAI", "JUIN", "JUIL", "AOUT", "SEPT", "OCT", "NOV", "DEC"};
+
+        auto now = id(sntp_time).now();
+        
+        if (now.is_valid()) {
+          char date_str[16];
+            
+          snprintf(date_str, sizeof(date_str), "%s %02d %s", 
+                  days[now.day_of_week-1], now.day_of_month, 
+                  months[now.month-1]);
+          
+          it.print(120, 210, id(font_32), id(green), TextAlign::CENTER, date_str);
+        }
+        else {
+          it.print(120, 210, id(font_32), id(green), TextAlign::CENTER, "--- -- ---");
+        }
+        
+        return;
+
   pages:
     - title: Boot
       guard:
@@ -122,26 +145,7 @@ miniui:
         lambda: return !id(boot_mode) && !id(ota_mode);
       body:
         lambda: |-
-          const char* days[] = {"DIM","LUN","MAR","MER","JEU","VEN","SAM"};
-          const char* months[] = {"JAN","FEV", "MARS", "AVRIL", "MAI", "JUIN", "JUIL", "AOUT", "SEPT", "OCT", "NOV", "DEC"};
-
           auto now = id(sntp_time).now();
-
-          auto draw_date = [&]() {
-
-            if (now.is_valid()) {
-              char date_str[16];
-                
-              snprintf(date_str, sizeof(date_str), "%s %02d %s", 
-                      days[now.day_of_week-1], now.day_of_month, 
-                      months[now.month-1]);
-              
-              it.print(120, 210, id(font_32), id(green), TextAlign::CENTER, date_str);
-            }
-            else {
-              it.print(120, 210, id(font_32), id(green), TextAlign::CENTER, "--- -- ---");
-            }
-          };
 
           if (now.is_valid()) {
             it.strftime(8, 16, id(font_extra_big), id(orange), TextAlign::TOP_LEFT, "%H", now);
@@ -150,7 +154,7 @@ miniui:
             it.printf(8, 16, id(font_extra_big), id(orange), TextAlign::TOP_LEFT, "--");
             it.printf(232, 180, id(font_extra_big), id(purple), TextAlign::BOTTOM_RIGHT, "--");
           }
-          draw_date();
+          ui->call_helper("date_footer", it);
           return;
     
     - title: Climat
@@ -254,6 +258,7 @@ miniui:
           }
 
           //draw_date();
+          ui->call_helper("date_footer", it);
 
           return;
 
@@ -277,6 +282,7 @@ miniui:
           }
 
           //draw_date();
+          ui->call_helper("date_footer", it);
 
           return;
 

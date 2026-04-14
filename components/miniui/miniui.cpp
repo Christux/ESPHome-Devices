@@ -6,32 +6,54 @@ namespace esphome
     {
         static const char *const TAG = "miniui";
 
-        void Page::set_title(const std::string &title)
+        void Helper::set_name(const std::string &name)
         {
-            title_ = std::move(title);
+            name_ = name;
         }
 
-        void Page::set_body(std::function<void(display::Display &)> &&body)
+        void Helper::set_function(HelperFn &&func)
+        {
+            function_ = std::move(func);
+        }
+
+        const std::string &Helper::get_name() const
+        {
+            return name_;
+        }
+
+        void Helper::call(display::Display &it, MiniUI *ui) const
+        {
+            if (function_)
+                function_(it, ui);
+        }
+
+        // Implémentation de Page
+        void Page::set_title(const std::string &title)
+        {
+            title_ = title;
+        }
+
+        void Page::set_body(BodyFn &&body)
         {
             body_ = std::move(body);
         }
 
-        void Page::set_guard(std::function<bool()> &&guard)
+        void Page::set_guard(GuardFn &&guard)
         {
             guard_ = std::move(guard);
         }
 
-        bool Page::is_visible() const
+        bool Page::is_visible(MiniUI *ui) const
         {
             if (guard_)
-                return guard_();
+                return guard_(ui);
             return true;
         }
 
-        void Page::render(display::Display &it)
+        void Page::render(display::Display &it, MiniUI *ui)
         {
             if (body_)
-                body_(it);
+                body_(it, ui);
         }
 
         const std::string &Page::get_title() const
@@ -39,11 +61,11 @@ namespace esphome
             return title_;
         }
 
-        void Page::render_body(display::Display &it) const
+        void Page::render_body(display::Display &it, MiniUI *ui) const
         {
             if (body_)
             {
-                body_(it);
+                body_(it, ui);
             }
             else
             {
@@ -51,6 +73,7 @@ namespace esphome
             }
         }
 
+        // Implémentation de MiniUI
         void MiniUI::setup()
         {
         }
@@ -61,7 +84,11 @@ namespace esphome
 
         void MiniUI::dump_config()
         {
-            ESP_LOGCONFIG(TAG, "Empty component");
+            ESP_LOGCONFIG(TAG, "MiniUI with %d pages and %d helpers", pages_.size(), helpers_.size());
+            for (auto *helper : helpers_)
+            {
+                ESP_LOGCONFIG(TAG, "  Helper: %s", helper->get_name().c_str());
+            }
         }
 
         void MiniUI::set_display(display::Display *display)
@@ -74,6 +101,30 @@ namespace esphome
             pages_.push_back(page);
         }
 
+        void MiniUI::add_helper(Helper *helper)
+        {
+            helpers_.push_back(helper);
+            helper_map_[helper->get_name()] = helper;
+        }
+
+        void MiniUI::call_helper(const std::string &name, display::Display &it)
+        {
+            auto it_helper = helper_map_.find(name);
+            if (it_helper != helper_map_.end())
+            {
+                it_helper->second->call(it, this);
+            }
+            else
+            {
+                ESP_LOGW(TAG, "Helper '%s' not found", name.c_str());
+            }
+        }
+
+        bool MiniUI::has_helper(const std::string &name) const
+        {
+            return helper_map_.find(name) != helper_map_.end();
+        }
+
         void MiniUI::next_page()
         {
             if (pages_.empty())
@@ -83,7 +134,7 @@ namespace esphome
             do
             {
                 current_index_ = (current_index_ + 1) % pages_.size();
-                if (pages_[current_index_]->is_visible())
+                if (pages_[current_index_]->is_visible(this))
                     return;
             } while (current_index_ != start);
         }
@@ -97,7 +148,7 @@ namespace esphome
             do
             {
                 current_index_ = (current_index_ + pages_.size() - 1) % pages_.size();
-                if (pages_[current_index_]->is_visible())
+                if (pages_[current_index_]->is_visible(this))
                     return;
             } while (current_index_ != start);
         }
@@ -108,7 +159,7 @@ namespace esphome
                 return;
 
             size_t start = current_index_;
-            while (!pages_[current_index_]->is_visible())
+            while (!pages_[current_index_]->is_visible(this))
             {
                 current_index_ = (current_index_ + 1) % pages_.size();
                 if (current_index_ == start)
@@ -120,7 +171,7 @@ namespace esphome
             ESP_LOGI("miniui", "current page = %d", current_index_);
             ESP_LOGI("miniui", "current page = %s", page->get_title().c_str());
 
-            page->render_body(it);
+            page->render_body(it, this);
         }
 
         int MiniUI::get_current_index() const
@@ -134,6 +185,7 @@ namespace esphome
                 return nullptr;
             return pages_[this->current_index_];
         }
+
         void MiniUI::update()
         {
             if (!display_)
@@ -143,11 +195,11 @@ namespace esphome
             if (!page)
                 return;
 
-            if (!page->is_visible())
+            if (!page->is_visible(this))
                 return;
 
             display_->clear();
-            page->render(*display_);
+            page->render(*display_, this);
         }
 
     } // namespace miniui
