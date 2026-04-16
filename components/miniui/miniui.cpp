@@ -94,6 +94,17 @@ namespace esphome
         void MiniUI::set_display(display::Display *display)
         {
             display_ = display;
+            set_display_writer(display_);
+        }
+
+        void MiniUI::set_display_writer(display::Display *display)
+        {
+            display_->set_writer(
+                [&](display::Display &it)
+                { 
+                    this->render(it); 
+                }
+            );
         }
 
         void MiniUI::add_page(Page *page)
@@ -158,6 +169,8 @@ namespace esphome
             if (pages_.empty())
                 return;
 
+            // it.clear();
+
             size_t start = current_index_;
             while (!pages_[current_index_]->is_visible(this))
             {
@@ -188,18 +201,21 @@ namespace esphome
 
         void MiniUI::update()
         {
-            if (!display_)
-                return;
+            // if (!display_)
+            //     return;
 
-            auto *page = get_current_page();
-            if (!page)
-                return;
+            // auto *page = get_current_page();
+            // if (!page)
+            //     return;
 
-            if (!page->is_visible(this))
-                return;
+            // if (!page->is_visible(this))
+            //     return;
+
+            // display_->clear();
+            // page->render(*display_, this);
 
             display_->clear();
-            page->render(*display_, this);
+            display_->update();
         }
 
     } // namespace miniui

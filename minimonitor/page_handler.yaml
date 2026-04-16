@@ -62,7 +62,8 @@ script:
     mode: restart
     then:
       - delay: 1s
-      - component.update: screen
+      #- component.update: screen
+      - lambda: id(ui).update();
 
   - id: update_page_select
     mode: restart

@@ -90,10 +90,6 @@ display:
     offset_width: 0
     update_interval: never
     spi_mode: mode3
-    #lambda: !include minimonitor/display_lambda.yaml
-    lambda: |-
-      id(ui).render(it);
-      return;
 
 miniui:
   id: ui

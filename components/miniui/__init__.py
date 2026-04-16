@@ -47,11 +47,11 @@ CONFIG_SCHEMA = cv.Schema({
 MiniUIRef = MiniUI.operator("ref")
 
 async def to_code(config):
-    var = cg.new_Pvariable(config[CONF_ID])
-    await cg.register_component(var, config)
+    miniui = cg.new_Pvariable(config[CONF_ID])
+    await cg.register_component(miniui, config)
 
     disp = await cg.get_variable(config[CONF_DISPLAY_ID])
-    cg.add(var.set_display(disp))
+    cg.add(miniui.set_display(disp))
 
     if CONF_HELPERS in config:
         for helper_name, helper_conf in config.get(CONF_HELPERS, {}).items():
@@ -69,7 +69,7 @@ async def to_code(config):
             
             cg.add(helper.set_name(helper_name))
             cg.add(helper.set_function(helper_lambda))
-            cg.add(var.add_helper(helper))
+            cg.add(miniui.add_helper(helper))
 
     for conf in config[CONF_PAGES]:
         page = cg.new_Pvariable(conf[CONF_ID])
@@ -96,4 +96,4 @@ async def to_code(config):
             )
             cg.add(page.set_guard(guard))
 
-        cg.add(var.add_page(page))
+        cg.add(miniui.add_page(page))

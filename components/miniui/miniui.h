@@ -70,6 +70,7 @@ namespace esphome
       std::vector<Helper *> helpers_;
       std::map<std::string, Helper *> helper_map_;
       size_t current_index_{0};
+      void set_display_writer(display::Display *display);
     };
 
   } // namespace miniui
