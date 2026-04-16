@@ -35,7 +35,7 @@ namespace esphome
 
         void Page::set_body(BodyFn &&body)
         {
-            body_ = std::move(body);
+            content_ = std::move(body);
         }
 
         void Page::set_guard(GuardFn &&guard)
@@ -52,8 +52,8 @@ namespace esphome
 
         void Page::render(display::Display &it, MiniUI *ui)
         {
-            if (body_)
-                body_(it, *ui);
+            if (content_)
+                content_(it, *ui);
         }
 
         const std::string &Page::get_title() const
@@ -61,11 +61,11 @@ namespace esphome
             return title_;
         }
 
-        void Page::render_body(display::Display &it, MiniUI *ui) const
+        void Page::render_content(display::Display &it, MiniUI *ui) const
         {
-            if (body_)
+            if (content_)
             {
-                body_(it, *ui);
+                content_(it, *ui);
             }
             else
             {
@@ -182,7 +182,7 @@ namespace esphome
             ESP_LOGI("miniui", "current page = %d", current_index_);
             ESP_LOGI("miniui", "current page = %s", page->get_title().c_str());
 
-            page->render_body(it, this);
+            page->render_content(it, this);
         }
 
         int MiniUI::get_current_index() const

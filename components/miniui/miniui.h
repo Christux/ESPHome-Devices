@@ -37,12 +37,12 @@ namespace esphome
       void set_guard(GuardFn &&guard);
       bool is_visible(MiniUI *ui) const;
       const std::string &get_title() const;
-      void render_body(display::Display &it, MiniUI *ui) const;
+      void render_content(display::Display &it, MiniUI *ui) const;
       void render(display::Display &it, MiniUI *ui);
 
     protected:
       std::string title_;
-      BodyFn body_;
+      BodyFn content_;
       GuardFn guard_;
     };
 
