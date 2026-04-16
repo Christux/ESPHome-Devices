@@ -53,6 +53,7 @@ namespace esphome
       void loop() override;
       void dump_config() override;
       void set_display(display::Display *display);
+      void set_display_writer(display::Display *display);
       void add_page(Page *page);
       void add_helper(Helper *helper);
       void call_helper(const std::string &name, display::Display &it);
@@ -70,7 +71,6 @@ namespace esphome
       std::vector<Helper *> helpers_;
       std::map<std::string, Helper *> helper_map_;
       size_t current_index_{0};
-      void set_display_writer(display::Display *display);
     };
 
   } // namespace miniui

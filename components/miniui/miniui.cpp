@@ -94,7 +94,6 @@ namespace esphome
         void MiniUI::set_display(display::Display *display)
         {
             display_ = display;
-            set_display_writer(display_);
         }
 
         void MiniUI::set_display_writer(display::Display *display)

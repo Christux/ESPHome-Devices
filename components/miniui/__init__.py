@@ -53,6 +53,8 @@ async def to_code(config):
     disp = await cg.get_variable(config[CONF_DISPLAY_ID])
     cg.add(miniui.set_display(disp))
 
+    cg.add(miniui.set_display_writer(disp))
+
     if CONF_HELPERS in config:
         for helper_name, helper_conf in config.get(CONF_HELPERS, {}).items():
             
