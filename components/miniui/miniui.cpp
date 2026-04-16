@@ -96,16 +96,6 @@ namespace esphome
             display_ = display;
         }
 
-        void MiniUI::set_display_writer(display::Display *display)
-        {
-            display_->set_writer(
-                [&](display::Display &it)
-                { 
-                    this->render(it); 
-                }
-            );
-        }
-
         void MiniUI::add_page(Page *page)
         {
             pages_.push_back(page);
