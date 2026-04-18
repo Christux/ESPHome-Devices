@@ -150,9 +150,15 @@ miniui:
             it.printf(8, 16, id(font_extra_big), id(orange), TextAlign::TOP_LEFT, "--");
             it.printf(232, 180, id(font_extra_big), id(purple), TextAlign::BOTTOM_RIGHT, "--");
           }
-          ui.call_helper("date_footer", it);
+          //ui.call_helper("date_footer", it);
           return;
-    
+        children:
+          - x: 0
+            y: 0
+            lambda: |-
+              ui.call_helper("date_footer", it);
+              return;
+
     - title: Climat
       guard:
         lambda: return !id(boot_mode) && !id(ota_mode);

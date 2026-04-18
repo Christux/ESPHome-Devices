@@ -1,5 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
+import voluptuous as vol
 from esphome.components import display
 from esphome.const import CONF_ID
 
@@ -25,21 +26,74 @@ CONF_HEIGHT = "height"
 CONF_CHILDREN = "children"
 CONF_LAMBDA = "lambda"
 CONF_GUARD = "guard"
+CONF_DISPLAY_VAR_NAME = "it"
+CONF_MINIUI_VAR_NAME = "ui"
 
 HELPER_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Helper),
-    cv.Required("lambda"): cv.lambda_,
+    cv.Required(CONF_LAMBDA): cv.lambda_,
 })
 
-FRAME_SCHEMA = cv.Schema({
+BASE_FRAME_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Frame),
     cv.Optional(CONF_X, default=0): cv.int_,
     cv.Optional(CONF_Y, default=0): cv.int_,
     cv.Optional(CONF_WIDTH): cv.int_,
     cv.Optional(CONF_HEIGHT): cv.int_,
     cv.Optional(CONF_LAMBDA): cv.lambda_,
-    #cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(cv.lazy(lambda: CONFIG_SCHEMA)),
 })
+
+FRAME_SCHEMA = BASE_FRAME_SCHEMA.extend({
+    cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(BASE_FRAME_SCHEMA.extend({
+        cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(BASE_FRAME_SCHEMA.extend({
+            cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(BASE_FRAME_SCHEMA.extend({
+                cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(BASE_FRAME_SCHEMA.extend({
+                    cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(BASE_FRAME_SCHEMA.extend({
+                        cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(BASE_FRAME_SCHEMA.extend({
+                            cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(BASE_FRAME_SCHEMA.extend({
+                                cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(BASE_FRAME_SCHEMA.extend({
+                                    cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(BASE_FRAME_SCHEMA),
+                                })),
+                            })),
+                        })),
+                    })),
+                })),
+            })),
+        })),
+    })),
+})
+
+# def validate_frame(value):
+
+#     if not isinstance(value, dict):
+#         raise cv.Invalid("Frame must be a dictionary")
+
+#     schema = {
+#         cv.GenerateID(): cv.declare_id(Frame),
+#         cv.Optional(CONF_X, default=0): cv.int_,
+#         cv.Optional(CONF_Y, default=0): cv.int_,
+#         cv.Optional(CONF_WIDTH): cv.int_,
+#         cv.Optional(CONF_HEIGHT): cv.int_,
+#         cv.Optional(CONF_LAMBDA): cv.lambda_,
+#         vol.Optional("children"): [validate_frame],  # récursif ici
+#     }
+
+#     return vol.Schema(schema)(value)
+
+
+# FRAME_SCHEMA = cv.Schema({
+#     cv.GenerateID(): cv.declare_id(Frame),
+#     cv.Optional(CONF_X, default=0): cv.int_,
+#     cv.Optional(CONF_Y, default=0): cv.int_,
+#     cv.Optional(CONF_WIDTH): cv.int_,
+#     cv.Optional(CONF_HEIGHT): cv.int_,
+#     cv.Optional(CONF_LAMBDA): cv.lambda_,
+#     #cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(FRAME_SCHEMA),
+# })
+
+# FRAME_SCHEMA = cv.Schema({
+#     vol.Required(CONF_ROOT_FRAME): validate_frame
+# })
 
 PAGE_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Page),
@@ -69,9 +123,9 @@ async def to_code(config):
     cg.add(miniui.set_display(disp))
 
     writer = await cg.process_lambda(
-        cv.Lambda(f"id({config[CONF_ID]}).render(it);"),
+        cv.Lambda(f"id({config[CONF_ID]}).render({CONF_DISPLAY_VAR_NAME});"),
         [
-            (display.DisplayRef, "it"),
+            (display.DisplayRef, CONF_DISPLAY_VAR_NAME),
         ],
         return_type=cg.void
     )
@@ -83,10 +137,10 @@ async def to_code(config):
             helper = cg.new_Pvariable(helper_conf[CONF_ID])
             
             helper_lambda = await cg.process_lambda(
-                helper_conf["lambda"],
+                helper_conf[CONF_LAMBDA],
                 [
-                    (display.DisplayRef, "it"),
-                    (MiniUIRef, "ui"),
+                    (display.DisplayRef, CONF_DISPLAY_VAR_NAME),
+                    (MiniUIRef, CONF_MINIUI_VAR_NAME),
                 ],
                 return_type=cg.void
             )
@@ -102,28 +156,49 @@ async def to_code(config):
 
         conf_root_frame = conf[CONF_ROOT_FRAME]
 
-        frame = cg.new_Pvariable(conf_root_frame[CONF_ID])
-
         if CONF_LAMBDA in conf_root_frame:
+
+            frame = cg.new_Pvariable(conf_root_frame[CONF_ID])
 
             content = await cg.process_lambda(
                 conf_root_frame[CONF_LAMBDA],
                 [
-                    (display.DisplayRef, "it"), 
-                    (MiniUIRef, "ui"),
+                    (display.DisplayRef, CONF_DISPLAY_VAR_NAME), 
+                    (MiniUIRef, CONF_MINIUI_VAR_NAME),
                 ],
                 return_type=cg.void
             )
 
             cg.add(frame.set_content(content))
+            cg.add(page.add_frame(frame))
 
-        cg.add(page.add_frame(frame))
+        if CONF_CHILDREN in conf_root_frame:
+
+            for child in conf_root_frame[CONF_CHILDREN]:
+
+                if CONF_LAMBDA in child:
+
+                    frame = cg.new_Pvariable(child[CONF_ID])
+
+                    content = await cg.process_lambda(
+                        child[CONF_LAMBDA],
+                        [
+                            (display.DisplayRef, CONF_DISPLAY_VAR_NAME), 
+                            (MiniUIRef, CONF_MINIUI_VAR_NAME),
+                        ],
+                        return_type=cg.void
+                    )
+
+                    cg.add(frame.set_content(content))
+                    cg.add(page.add_frame(frame))
+
+
 
         if CONF_GUARD in conf:
             guard = await cg.process_lambda(
                 conf[CONF_GUARD][CONF_LAMBDA],
                 [
-                    (MiniUIRef, "ui"),
+                    (MiniUIRef, CONF_MINIUI_VAR_NAME),
                 ],
                 return_type=cg.bool_
             )

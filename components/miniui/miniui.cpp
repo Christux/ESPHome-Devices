@@ -72,7 +72,7 @@ namespace esphome
 
         void Page::render(display::Display &it, MiniUI *ui) const
         {
-            for (auto *frame : this->frames_)
+            for (Frame *frame : frames_)
             {
                 frame->render_content(it, ui);
             }
