@@ -9,6 +9,7 @@ miniui_ns = cg.esphome_ns.namespace("miniui")
 
 MiniUI = miniui_ns.class_("MiniUI", cg.Component)
 Page = miniui_ns.class_("Page")
+Frame = miniui_ns.class_("Frame")
 Helper = miniui_ns.class_("Helper")
 
 CONF_DISPLAY_ID = "display_id"
@@ -16,7 +17,13 @@ CONF_PAGES = "pages"
 CONF_HELPERS = "helpers"
 CONF_NAME = "name"
 CONF_TITLE = "title"
-CONF_CONTENT = "content"
+CONF_ROOT_FRAME = "content"
+CONF_X = "x"
+CONF_Y = "y"
+CONF_WIDTH = "width"
+CONF_HEIGHT = "height"
+CONF_CHILDREN = "children"
+CONF_LAMBDA = "lambda"
 CONF_GUARD = "guard"
 
 HELPER_SCHEMA = cv.Schema({
@@ -24,14 +31,22 @@ HELPER_SCHEMA = cv.Schema({
     cv.Required("lambda"): cv.lambda_,
 })
 
+FRAME_SCHEMA = cv.Schema({
+    cv.GenerateID(): cv.declare_id(Frame),
+    cv.Optional(CONF_X, default=0): cv.int_,
+    cv.Optional(CONF_Y, default=0): cv.int_,
+    cv.Optional(CONF_WIDTH): cv.int_,
+    cv.Optional(CONF_HEIGHT): cv.int_,
+    cv.Optional(CONF_LAMBDA): cv.lambda_,
+    #cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(cv.lazy(lambda: CONFIG_SCHEMA)),
+})
+
 PAGE_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Page),
     cv.Required(CONF_TITLE): cv.string,
-    cv.Required(CONF_CONTENT): cv.Schema({
-        cv.Required("lambda"): cv.lambda_,
-    }),
+    cv.Required(CONF_ROOT_FRAME): FRAME_SCHEMA,
     cv.Optional(CONF_GUARD): cv.Schema({
-        cv.Required("lambda"): cv.lambda_,
+        cv.Required(CONF_LAMBDA): cv.lambda_,
     }),
 })
 
@@ -54,12 +69,12 @@ async def to_code(config):
     cg.add(miniui.set_display(disp))
 
     writer = await cg.process_lambda(
-                cv.Lambda(f"id({config[CONF_ID]}).render(it);"),
-                [
-                    (display.DisplayRef, "it"),
-                ],
-                return_type=cg.void
-            )
+        cv.Lambda(f"id({config[CONF_ID]}).render(it);"),
+        [
+            (display.DisplayRef, "it"),
+        ],
+        return_type=cg.void
+    )
     cg.add(disp.set_writer(writer))
 
     if CONF_HELPERS in config:
@@ -85,19 +100,28 @@ async def to_code(config):
 
         cg.add(page.set_title(conf[CONF_TITLE]))
 
-        content = await cg.process_lambda(
-            conf[CONF_CONTENT]["lambda"],
-            [
-                (display.DisplayRef, "it"), 
-                (MiniUIRef, "ui"),
-            ],
-            return_type=cg.void
-        )
-        cg.add(page.set_content(content))
+        conf_root_frame = conf[CONF_ROOT_FRAME]
+
+        frame = cg.new_Pvariable(conf_root_frame[CONF_ID])
+
+        if CONF_LAMBDA in conf_root_frame:
+
+            content = await cg.process_lambda(
+                conf_root_frame[CONF_LAMBDA],
+                [
+                    (display.DisplayRef, "it"), 
+                    (MiniUIRef, "ui"),
+                ],
+                return_type=cg.void
+            )
+
+            cg.add(frame.set_content(content))
+
+        cg.add(page.add_frame(frame))
 
         if CONF_GUARD in conf:
             guard = await cg.process_lambda(
-                conf[CONF_GUARD]["lambda"],
+                conf[CONF_GUARD][CONF_LAMBDA],
                 [
                     (MiniUIRef, "ui"),
                 ],

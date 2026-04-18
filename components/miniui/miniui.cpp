@@ -6,6 +6,7 @@ namespace esphome
     {
         static const char *const TAG = "miniui";
 
+        // Helper
         void Helper::set_name(const std::string &name)
         {
             name_ = name;
@@ -27,15 +28,29 @@ namespace esphome
                 function_(it, *ui);
         }
 
-        // Implémentation de Page
+        // Frame
+        void Frame::set_bounds(int x, int y, int w, int h)
+        {
+            x_ = x;
+            y_ = y;
+            w_ = w;
+            h_ = h;
+        }
+        void Frame::set_content(ContentFn &&content)
+        {
+            content_ = std::move(content);
+        }
+
+        void Frame::render_content(display::Display &it, MiniUI *ui) const
+        {
+            if (content_)
+                content_(it, *ui);
+        }
+
+        // Page
         void Page::set_title(const std::string &title)
         {
             title_ = title;
-        }
-
-        void Page::set_content(BodyFn &&content)
-        {
-            content_ = std::move(content);
         }
 
         void Page::set_guard(GuardFn &&guard)
@@ -50,10 +65,17 @@ namespace esphome
             return true;
         }
 
-        void Page::render(display::Display &it, MiniUI *ui)
+        void Page::add_frame(Frame *frame)
         {
-            if (content_)
-                content_(it, *ui);
+            frames_.push_back(frame);
+        }
+
+        void Page::render(display::Display &it, MiniUI *ui) const
+        {
+            for (auto *frame : this->frames_)
+            {
+                frame->render_content(it, ui);
+            }
         }
 
         const std::string &Page::get_title() const
@@ -61,19 +83,7 @@ namespace esphome
             return title_;
         }
 
-        void Page::render_content(display::Display &it, MiniUI *ui) const
-        {
-            if (content_)
-            {
-                content_(it, *ui);
-            }
-            else
-            {
-                ESP_LOGE(TAG, "No lambda set for page content %s", get_title().c_str());
-            }
-        }
-
-        // Implémentation de MiniUI
+        // MiniUI
         void MiniUI::setup()
         {
         }
@@ -171,7 +181,7 @@ namespace esphome
             ESP_LOGI("miniui", "current page = %d", current_index_);
             ESP_LOGI("miniui", "current page = %s", page->get_title().c_str());
 
-            page->render_content(it, this);
+            page->render(it, this);
         }
 
         int MiniUI::get_current_index() const

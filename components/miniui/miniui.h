@@ -12,7 +12,7 @@ namespace esphome
   {
     class MiniUI;
 
-    using BodyFn = std::function<void(display::Display &, MiniUI &)>;
+    using ContentFn = std::function<void(display::Display &, MiniUI &)>;
     using GuardFn = std::function<bool(MiniUI &)>;
     using HelperFn = std::function<void(display::Display &, MiniUI &)>;
 
@@ -29,21 +29,32 @@ namespace esphome
       HelperFn function_;
     };
 
+    class Frame
+    {
+      public:
+        void set_bounds(int x, int y, int w, int h);
+        void set_content(ContentFn &&content);
+        void render_content(display::Display &it, MiniUI *ui) const;
+
+      protected:
+        int x_{0}, y_{0}, w_{0}, h_{0};
+        ContentFn content_;
+    };
+
     class Page
     {
     public:
       void set_title(const std::string &title);
-      void set_content(BodyFn &&content);
+      const std::string &get_title() const;
       void set_guard(GuardFn &&guard);
       bool is_visible(MiniUI *ui) const;
-      const std::string &get_title() const;
-      void render_content(display::Display &it, MiniUI *ui) const;
-      void render(display::Display &it, MiniUI *ui);
+      void add_frame(Frame *frame);
+      void render(display::Display &it, MiniUI *ui) const;
 
     protected:
       std::string title_;
-      BodyFn content_;
       GuardFn guard_;
+      std::vector<Frame *> frames_;
     };
 
     class MiniUI : public Component
