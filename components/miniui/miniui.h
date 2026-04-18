@@ -33,7 +33,7 @@ namespace esphome
     {
     public:
       void set_title(const std::string &title);
-      void set_body(BodyFn &&body);
+      void set_content(BodyFn &&content);
       void set_guard(GuardFn &&guard);
       bool is_visible(MiniUI *ui) const;
       const std::string &get_title() const;

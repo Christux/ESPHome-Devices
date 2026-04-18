@@ -33,9 +33,9 @@ namespace esphome
             title_ = title;
         }
 
-        void Page::set_body(BodyFn &&body)
+        void Page::set_content(BodyFn &&content)
         {
-            content_ = std::move(body);
+            content_ = std::move(content);
         }
 
         void Page::set_guard(GuardFn &&guard)
@@ -69,7 +69,7 @@ namespace esphome
             }
             else
             {
-                ESP_LOGE(TAG, "No lambda set for page body %s", get_title().c_str());
+                ESP_LOGE(TAG, "No lambda set for page content %s", get_title().c_str());
             }
         }
 

@@ -85,7 +85,7 @@ async def to_code(config):
 
         cg.add(page.set_title(conf[CONF_TITLE]))
 
-        body = await cg.process_lambda(
+        content = await cg.process_lambda(
             conf[CONF_CONTENT]["lambda"],
             [
                 (display.DisplayRef, "it"), 
@@ -93,7 +93,7 @@ async def to_code(config):
             ],
             return_type=cg.void
         )
-        cg.add(page.set_body(body))
+        cg.add(page.set_content(content))
 
         if CONF_GUARD in conf:
             guard = await cg.process_lambda(
