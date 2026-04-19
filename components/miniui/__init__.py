@@ -1,6 +1,5 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-import voluptuous as vol
 from esphome.components import display
 from esphome.const import CONF_ID
 
@@ -63,38 +62,6 @@ FRAME_SCHEMA = BASE_FRAME_SCHEMA.extend({
     })),
 })
 
-# def validate_frame(value):
-
-#     if not isinstance(value, dict):
-#         raise cv.Invalid("Frame must be a dictionary")
-
-#     schema = {
-#         cv.GenerateID(): cv.declare_id(Frame),
-#         cv.Optional(CONF_X, default=0): cv.int_,
-#         cv.Optional(CONF_Y, default=0): cv.int_,
-#         cv.Optional(CONF_WIDTH): cv.int_,
-#         cv.Optional(CONF_HEIGHT): cv.int_,
-#         cv.Optional(CONF_LAMBDA): cv.lambda_,
-#         vol.Optional("children"): [validate_frame],  # récursif ici
-#     }
-
-#     return vol.Schema(schema)(value)
-
-
-# FRAME_SCHEMA = cv.Schema({
-#     cv.GenerateID(): cv.declare_id(Frame),
-#     cv.Optional(CONF_X, default=0): cv.int_,
-#     cv.Optional(CONF_Y, default=0): cv.int_,
-#     cv.Optional(CONF_WIDTH): cv.int_,
-#     cv.Optional(CONF_HEIGHT): cv.int_,
-#     cv.Optional(CONF_LAMBDA): cv.lambda_,
-#     #cv.Optional(CONF_CHILDREN, default=[]): cv.ensure_list(FRAME_SCHEMA),
-# })
-
-# FRAME_SCHEMA = cv.Schema({
-#     vol.Required(CONF_ROOT_FRAME): validate_frame
-# })
-
 PAGE_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Page),
     cv.Required(CONF_TITLE): cv.string,
@@ -115,12 +82,7 @@ CONFIG_SCHEMA = cv.Schema({
 
 MiniUIRef = MiniUI.operator("ref")
 
-async def to_code(config):
-    miniui = cg.new_Pvariable(config[CONF_ID])
-    await cg.register_component(miniui, config)
-
-    disp = await cg.get_variable(config[CONF_DISPLAY_ID])
-    cg.add(miniui.set_display(disp))
+async def add_set_of_display_writer(config, disp):
 
     writer = await cg.process_lambda(
         cv.Lambda(f"id({config[CONF_ID]}).render({CONF_DISPLAY_VAR_NAME});"),
@@ -131,7 +93,10 @@ async def to_code(config):
     )
     cg.add(disp.set_writer(writer))
 
+async def add_set_of_helpers(config, miniui):
+
     if CONF_HELPERS in config:
+
         for helper_name, helper_conf in config.get(CONF_HELPERS, {}).items():
             
             helper = cg.new_Pvariable(helper_conf[CONF_ID])
@@ -149,52 +114,46 @@ async def to_code(config):
             cg.add(helper.set_function(helper_lambda))
             cg.add(miniui.add_helper(helper))
 
-    for conf in config[CONF_PAGES]:
-        page = cg.new_Pvariable(conf[CONF_ID])
+async def resolve_frame(conf_root_frame, page):
 
-        cg.add(page.set_title(conf[CONF_TITLE]))
+    if CONF_LAMBDA in conf_root_frame:
 
-        conf_root_frame = conf[CONF_ROOT_FRAME]
+        frame = cg.new_Pvariable(conf_root_frame[CONF_ID])
 
-        if CONF_LAMBDA in conf_root_frame:
+        content = await cg.process_lambda(
+            conf_root_frame[CONF_LAMBDA],
+            [
+                (display.DisplayRef, CONF_DISPLAY_VAR_NAME), 
+                (MiniUIRef, CONF_MINIUI_VAR_NAME),
+            ],
+            return_type=cg.void
+        )
 
-            frame = cg.new_Pvariable(conf_root_frame[CONF_ID])
+        cg.add(frame.set_content(content))
+        cg.add(page.add_frame(frame))
 
-            content = await cg.process_lambda(
-                conf_root_frame[CONF_LAMBDA],
-                [
-                    (display.DisplayRef, CONF_DISPLAY_VAR_NAME), 
-                    (MiniUIRef, CONF_MINIUI_VAR_NAME),
-                ],
-                return_type=cg.void
+    if CONF_CHILDREN in conf_root_frame:
+
+        for child in conf_root_frame[CONF_CHILDREN]:
+
+            await resolve_frame(
+                conf_root_frame=child, 
+                page=page
             )
 
-            cg.add(frame.set_content(content))
-            cg.add(page.add_frame(frame))
+async def add_set_of_pages(config, miniui):
 
-        if CONF_CHILDREN in conf_root_frame:
+    for conf in config[CONF_PAGES]:
+        page = cg.new_Pvariable(conf[CONF_ID])
+        cg.add(page.set_title(conf[CONF_TITLE]))
 
-            for child in conf_root_frame[CONF_CHILDREN]:
-
-                if CONF_LAMBDA in child:
-
-                    frame = cg.new_Pvariable(child[CONF_ID])
-
-                    content = await cg.process_lambda(
-                        child[CONF_LAMBDA],
-                        [
-                            (display.DisplayRef, CONF_DISPLAY_VAR_NAME), 
-                            (MiniUIRef, CONF_MINIUI_VAR_NAME),
-                        ],
-                        return_type=cg.void
-                    )
-
-                    cg.add(frame.set_content(content))
-                    cg.add(page.add_frame(frame))
-
-
+        await resolve_frame(
+            conf_root_frame=conf[CONF_ROOT_FRAME], 
+            page=page
+        )
 
         if CONF_GUARD in conf:
+
             guard = await cg.process_lambda(
                 conf[CONF_GUARD][CONF_LAMBDA],
                 [
@@ -202,6 +161,30 @@ async def to_code(config):
                 ],
                 return_type=cg.bool_
             )
+
             cg.add(page.set_guard(guard))
 
         cg.add(miniui.add_page(page))
+
+async def to_code(config):
+
+    miniui = cg.new_Pvariable(config[CONF_ID])
+    await cg.register_component(miniui, config)
+
+    disp = await cg.get_variable(config[CONF_DISPLAY_ID])
+    cg.add(miniui.set_display(disp))
+
+    await add_set_of_display_writer(
+        config=config,
+        disp=disp
+    )
+
+    await add_set_of_helpers(
+        config=config,
+        miniui=miniui
+    )
+
+    await add_set_of_pages(
+        config=config,
+        miniui=miniui
+    )
