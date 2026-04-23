@@ -131,10 +131,18 @@ miniui:
       guard:
         lambda: return id(ota_mode);
       content:
+        background_color: red
         lambda: |-
-          it.fill(id(red));
           it.print(120, 120, id(font_32), id(light_gray), TextAlign::CENTER, "OTA Update..");
           return;
+  
+    - title: Test
+      guard:
+        lambda: return !id(boot_mode) && !id(ota_mode);
+      content:
+        background_color: purple
+        lambda: |-
+          it.print(120, 120, id(font_32), id(yellow), TextAlign::CENTER, "Test");
 
     - title: Horloge
       guard:

@@ -43,8 +43,19 @@ namespace esphome
 
         void Frame::render_content(display::Display &it, MiniUI *ui) const
         {
+            if (background_.has_value())
+            {
+                it.fill(*this->background_);
+            }
+
             if (content_)
                 content_(it, *ui);
+        }
+
+        void Frame::set_background(optional<Color> color)
+        {
+
+            this->background_ = color;
         }
 
         // Page

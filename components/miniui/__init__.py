@@ -1,6 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import display
+from esphome.components import display, color
 from esphome.const import CONF_ID
 
 DEPENDENCIES = ["display"]
@@ -24,6 +24,7 @@ CONF_WIDTH = "width"
 CONF_HEIGHT = "height"
 CONF_CHILDREN = "children"
 CONF_LAMBDA = "lambda"
+CONF_BACKGROUND = "background_color"
 CONF_GUARD = "guard"
 CONF_DISPLAY_VAR_NAME = "it"
 CONF_MINIUI_VAR_NAME = "ui"
@@ -40,6 +41,7 @@ BASE_FRAME_SCHEMA = cv.Schema({
     cv.Optional(CONF_WIDTH): cv.int_,
     cv.Optional(CONF_HEIGHT): cv.int_,
     cv.Optional(CONF_LAMBDA): cv.lambda_,
+    cv.Optional(CONF_BACKGROUND): cv.use_id(color),
 })
 
 FRAME_SCHEMA = BASE_FRAME_SCHEMA.extend({
@@ -114,14 +116,30 @@ async def add_set_of_helpers(config, miniui):
             cg.add(helper.set_function(helper_lambda))
             cg.add(miniui.add_helper(helper))
 
-async def resolve_frame(conf_root_frame, page):
+async def resolve_frame(conf_frame, page, parent_bounds):
 
-    if CONF_LAMBDA in conf_root_frame:
+    frame = cg.new_Pvariable(conf_frame[CONF_ID])
 
-        frame = cg.new_Pvariable(conf_root_frame[CONF_ID])
+    bounds = {
+        CONF_X: parent_bounds[CONF_X],
+        CONF_Y: parent_bounds[CONF_Y],
+        CONF_WIDTH: parent_bounds[CONF_WIDTH],
+        CONF_HEIGHT: parent_bounds[CONF_HEIGHT]
+    }
+
+    for param in bounds.keys():
+        if param in conf_frame:
+            bounds[param] = bounds[param] + conf_frame[param]
+
+    if CONF_BACKGROUND in conf_frame:
+
+        col = await cg.get_variable(conf_frame[CONF_BACKGROUND])
+        cg.add(frame.set_background(col))
+
+    if CONF_LAMBDA in conf_frame:
 
         content = await cg.process_lambda(
-            conf_root_frame[CONF_LAMBDA],
+            conf_frame[CONF_LAMBDA],
             [
                 (display.DisplayRef, CONF_DISPLAY_VAR_NAME), 
                 (MiniUIRef, CONF_MINIUI_VAR_NAME),
@@ -130,26 +148,34 @@ async def resolve_frame(conf_root_frame, page):
         )
 
         cg.add(frame.set_content(content))
+        cg.add(frame.set_bounds(bounds[CONF_X], bounds[CONF_Y], bounds[CONF_WIDTH], bounds[CONF_HEIGHT]))
         cg.add(page.add_frame(frame))
 
-    if CONF_CHILDREN in conf_root_frame:
+    if CONF_CHILDREN in conf_frame:
 
-        for child in conf_root_frame[CONF_CHILDREN]:
+        for child in conf_frame[CONF_CHILDREN]:
 
             await resolve_frame(
-                conf_root_frame=child, 
-                page=page
+                conf_frame=child, 
+                page=page,
+                parent_bounds=bounds
             )
 
-async def add_set_of_pages(config, miniui):
+async def add_set_of_pages(config, disp, miniui):
 
     for conf in config[CONF_PAGES]:
         page = cg.new_Pvariable(conf[CONF_ID])
         cg.add(page.set_title(conf[CONF_TITLE]))
 
         await resolve_frame(
-            conf_root_frame=conf[CONF_ROOT_FRAME], 
-            page=page
+            conf_frame=conf[CONF_ROOT_FRAME], 
+            page=page,
+            parent_bounds={
+                CONF_X: 0,
+                CONF_Y: 0,
+                CONF_WIDTH: disp.get_width(),
+                CONF_HEIGHT: disp.get_height()
+            }
         )
 
         if CONF_GUARD in conf:
@@ -186,5 +212,6 @@ async def to_code(config):
 
     await add_set_of_pages(
         config=config,
+        disp=disp,
         miniui=miniui
     )

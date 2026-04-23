@@ -2,8 +2,10 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/display/display.h"
+#include "esphome/core/color.h"
 #include "esphome/core/log.h"
 #include <vector>
+#include <optional>
 #include <map>
 
 namespace esphome
@@ -33,12 +35,14 @@ namespace esphome
     {
       public:
         void set_bounds(int x, int y, int w, int h);
+        void set_background(optional<Color> color);
         void set_content(ContentFn &&content);
         void render_content(display::Display &it, MiniUI *ui) const;
 
       protected:
         int x_{0}, y_{0}, w_{0}, h_{0};
         ContentFn content_;
+        optional<Color> background_;
     };
 
     class Page
