@@ -71,6 +71,9 @@ globals:
 - id: colors
   type: float[12]
   initial_value: "{1., 1., 1., .5, .0, .0, .0, .0, .0, .5, 1., 1.}"
+- id: brightness_backup
+  type: float
+  initial_value: ".0"
 
 binary_sensor:
   - platform: gpio
@@ -114,27 +117,27 @@ binary_sensor:
             - light.is_on: color_led
           then:
             - lambda: |-
-                std::string actual_effect=id(color_led).get_effect_name();
-                static int total_effects=id(color_led).get_effects().size();
-                std::string this_effect="";
+                std::string actual_effect = id(color_led).get_effect_name();
+                static int total_effects = id(color_led).get_effects().size();
+                std::string this_effect = "";
 
-                if(actual_effect=="None") {
-                  id(effect_index)=0;
+                if(actual_effect == "None") {
+                  id(effect_index) = 0;
                 } else {
                   for(int i = 0; i <= total_effects; i++) {
-                    this_effect=id(color_led).get_effects().at(i)->get_name();
-                    if (this_effect==actual_effect) {
-                      id(effect_index)=i+1;
+                    this_effect = id(color_led).get_effects().at(i)->get_name();
+                    if (this_effect == actual_effect) {
+                      id(effect_index) = i + 1;
                       break;
                     }
                   }
 
-                  if (id(effect_index)==total_effects) {
-                    id(effect_index)=-1;
+                  if (id(effect_index) == total_effects) {
+                    id(effect_index) =- 1;
                   }
                 }
 
-                if (id(effect_index)==-1) {
+                if (id(effect_index) == -1) {
                   id(color_led).turn_on().set_effect("None").perform();
                 } else {
                   auto call = id(color_led).turn_on();
@@ -193,6 +196,19 @@ light:
     color_interlock: true
     restore_mode: RESTORE_AND_OFF
     default_transition_length: 0.4s
+    gamma_correct: 1
+    # Init brightness on light turn on
+    on_turn_on:
+      then:
+        - lambda: |-
+            ESP_LOGD("LedRing", "Turn on");
+            if(id(brightness_backup) > .0)
+            {
+              ESP_LOGD("LedRing", "Restore brightness to %f", id(brightness_backup));
+              id(color_led).turn_on().set_brightness(id(brightness_backup)).perform();
+              id(brightness_backup) = .0;
+            }
+            return;
     effects:
       - lambda:
           name: Color cycle
@@ -215,3 +231,60 @@ light:
       - random:
       - flicker:
       - pulse:
+      - lambda:
+          name: Sunrise
+          update_interval: 0.2s
+          lambda: |-
+            auto call = id(color_led).turn_on();
+            static const unsigned long duration = 30 * 60; // in seconds
+            static const float Imax = 0.9;
+            static unsigned long timestart = 0;
+            static unsigned long timestop = 0;
+            
+            unsigned long now = millis();
+
+            if(initial_run)
+            {
+              timestart = now;
+              timestop = now + duration * 1000;
+
+              ESP_LOGD("Sunrise", "Start sun rise");
+
+              id(brightness_backup) = id(color_led).remote_values.get_brightness();
+              //ESP_LOGD("Sunrise", "Brighness: %f", id(brightness_backup));
+
+              call.set_color_mode(light::ColorMode::RGB);
+
+              // Set brightness to min
+              call.set_brightness(0.0001);
+              call.set_rgb(1., 0., 0.);
+              call.set_transition_length(0);
+              
+              call.perform();
+            }
+
+            if (now < timestop) {
+
+              unsigned long t = (now - timestart) / 1000; // seconds
+              float R = Imax * 1.0 / (1 + exp(-0.5 * 30 / duration * (t - duration * 0.55) ) );
+              float G = Imax * 0.7 / (1 + exp(-0.55 * 30 / duration * (t - duration * 0.7 ) ) );
+              float B = Imax * 0.1 / (1 + exp(-0.6 * 30 / duration * (t - duration * 0.8 ) ) );
+              float brightness = R > G ? (R > B ? R : B) : (G > B ? G : B);
+
+              ESP_LOGD("Sunrise", "R: %f", R);
+
+              call.set_transition_length(0);
+              call.set_rgb(R, G, B);
+              call.set_brightness(brightness);
+              call.perform();
+            }
+            else
+            {
+              if (timestop > 0)
+              {
+                ESP_LOGD("Sunrise", "End sun rise");
+                timestop = 0;
+              }
+            }
+
+            return;
