@@ -13,6 +13,7 @@ source .venv/bin/activate
 ### 3. Install ESPHOME
 ```bash
 pip install esphome
+pip install esphome-device-builder
 ```
 
 ## Usage
@@ -23,7 +24,7 @@ source .venv/bin/activate
 ```
 ### Run dashboard
 ```
-esphome dashboard .
+esphome esphome-device-builder .
 ```
 ### Compile and upload firmware in device
 ```
